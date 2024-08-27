@@ -1,0 +1,24 @@
+type Skill {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateSkillInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateSkillInput {
+  id: Int!
+}
+
+type Query {
+  skills: [Skill]!
+  skill(id: Int!): Skill
+}
+
+type Mutation {
+  createSkill(createSkillInput: CreateSkillInput!): Skill!
+  updateSkill(updateSkillInput: UpdateSkillInput!): Skill!
+  removeSkill(id: Int!): Skill
+}

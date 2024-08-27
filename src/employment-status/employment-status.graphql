@@ -1,0 +1,24 @@
+type EmploymentStatus {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateEmploymentStatusInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateEmploymentStatusInput {
+  id: Int!
+}
+
+type Query {
+  employmentStatus: [EmploymentStatus]!
+  employmentStatus(id: Int!): EmploymentStatus
+}
+
+type Mutation {
+  createEmploymentStatus(createEmploymentStatusInput: CreateEmploymentStatusInput!): EmploymentStatus!
+  updateEmploymentStatus(updateEmploymentStatusInput: UpdateEmploymentStatusInput!): EmploymentStatus!
+  removeEmploymentStatus(id: Int!): EmploymentStatus
+}

@@ -1,0 +1,24 @@
+type Work {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateWorkInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateWorkInput {
+  id: Int!
+}
+
+type Query {
+  work: [Work]!
+  work(id: Int!): Work
+}
+
+type Mutation {
+  createWork(createWorkInput: CreateWorkInput!): Work!
+  updateWork(updateWorkInput: UpdateWorkInput!): Work!
+  removeWork(id: Int!): Work
+}

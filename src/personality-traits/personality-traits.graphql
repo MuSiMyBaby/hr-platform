@@ -1,0 +1,24 @@
+type PersonalityTrait {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreatePersonalityTraitInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdatePersonalityTraitInput {
+  id: Int!
+}
+
+type Query {
+  personalityTraits: [PersonalityTrait]!
+  personalityTrait(id: Int!): PersonalityTrait
+}
+
+type Mutation {
+  createPersonalityTrait(createPersonalityTraitInput: CreatePersonalityTraitInput!): PersonalityTrait!
+  updatePersonalityTrait(updatePersonalityTraitInput: UpdatePersonalityTraitInput!): PersonalityTrait!
+  removePersonalityTrait(id: Int!): PersonalityTrait
+}

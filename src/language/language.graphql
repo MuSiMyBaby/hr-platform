@@ -1,0 +1,24 @@
+type Language {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateLanguageInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateLanguageInput {
+  id: Int!
+}
+
+type Query {
+  language: [Language]!
+  language(id: Int!): Language
+}
+
+type Mutation {
+  createLanguage(createLanguageInput: CreateLanguageInput!): Language!
+  updateLanguage(updateLanguageInput: UpdateLanguageInput!): Language!
+  removeLanguage(id: Int!): Language
+}

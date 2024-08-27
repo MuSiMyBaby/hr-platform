@@ -1,0 +1,24 @@
+type Transportation {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateTransportationInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateTransportationInput {
+  id: Int!
+}
+
+type Query {
+  transportation: [Transportation]!
+  transportation(id: Int!): Transportation
+}
+
+type Mutation {
+  createTransportation(createTransportationInput: CreateTransportationInput!): Transportation!
+  updateTransportation(updateTransportationInput: UpdateTransportationInput!): Transportation!
+  removeTransportation(id: Int!): Transportation
+}
