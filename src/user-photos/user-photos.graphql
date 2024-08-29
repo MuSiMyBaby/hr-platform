@@ -1,0 +1,24 @@
+type UserPhoto {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserPhotoInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserPhotoInput {
+  id: Int!
+}
+
+type Query {
+  userPhotos: [UserPhoto]!
+  userPhoto(id: Int!): UserPhoto
+}
+
+type Mutation {
+  createUserPhoto(createUserPhotoInput: CreateUserPhotoInput!): UserPhoto!
+  updateUserPhoto(updateUserPhotoInput: UpdateUserPhotoInput!): UserPhoto!
+  removeUserPhoto(id: Int!): UserPhoto
+}

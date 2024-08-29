@@ -1,0 +1,24 @@
+type UserEducation {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserEducationInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserEducationInput {
+  id: Int!
+}
+
+type Query {
+  userEducation: [UserEducation]!
+  userEducation(id: Int!): UserEducation
+}
+
+type Mutation {
+  createUserEducation(createUserEducationInput: CreateUserEducationInput!): UserEducation!
+  updateUserEducation(updateUserEducationInput: UpdateUserEducationInput!): UserEducation!
+  removeUserEducation(id: Int!): UserEducation
+}

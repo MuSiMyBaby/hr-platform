@@ -1,6 +1,25 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "paths": {
+      "@users/*": ["src/users/*"],
+      "@roles/*": ["src/roles/*"],
+      "@resumes/*": ["src/resume/*"],
+      "@user-education/*": ["src/user-education/*"],
+      "@user-language/*": ["src/user-language/*"],
+      "@user-work/*": ["src/user-work/*"],
+      "@user-skills/*": ["src/user-skills/*"],
+      "@user-certifications/*": ["src/user-certifications/*"],
+      "@user-personality-traits/*": ["src/user-personality-traits/*"],
+      "@user-transportation/*": ["src/user-transportation/*"],
+      "@user-work-schedule/*": ["src/user-work-schedule/*"],
+      "@user-employment-status/*": ["src/user-employment-status/*"],
+      "@user-job-type/*": ["src/user-job-type/*"],
+      "@user-emergency-contacts/*": ["src/user-emergency-contacts/*"],
+      "@user-personal-statements/*": ["src/user-personal-statements/*"],
+      "@user-portfolios/*": ["src/user-portfolios/*"],
+      "@user-photos/*": ["src/user-photos/*"]
+    },
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,

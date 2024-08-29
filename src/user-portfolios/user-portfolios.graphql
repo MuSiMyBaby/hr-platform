@@ -1,0 +1,24 @@
+type UserPortfolio {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserPortfolioInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserPortfolioInput {
+  id: Int!
+}
+
+type Query {
+  userPortfolios: [UserPortfolio]!
+  userPortfolio(id: Int!): UserPortfolio
+}
+
+type Mutation {
+  createUserPortfolio(createUserPortfolioInput: CreateUserPortfolioInput!): UserPortfolio!
+  updateUserPortfolio(updateUserPortfolioInput: UpdateUserPortfolioInput!): UserPortfolio!
+  removeUserPortfolio(id: Int!): UserPortfolio
+}

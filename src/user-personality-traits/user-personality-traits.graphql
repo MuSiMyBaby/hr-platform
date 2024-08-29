@@ -1,0 +1,24 @@
+type UserPersonalityTrait {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserPersonalityTraitInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserPersonalityTraitInput {
+  id: Int!
+}
+
+type Query {
+  userPersonalityTraits: [UserPersonalityTrait]!
+  userPersonalityTrait(id: Int!): UserPersonalityTrait
+}
+
+type Mutation {
+  createUserPersonalityTrait(createUserPersonalityTraitInput: CreateUserPersonalityTraitInput!): UserPersonalityTrait!
+  updateUserPersonalityTrait(updateUserPersonalityTraitInput: UpdateUserPersonalityTraitInput!): UserPersonalityTrait!
+  removeUserPersonalityTrait(id: Int!): UserPersonalityTrait
+}

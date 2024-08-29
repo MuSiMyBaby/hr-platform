@@ -1,0 +1,24 @@
+type UserWorkSchedule {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserWorkScheduleInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserWorkScheduleInput {
+  id: Int!
+}
+
+type Query {
+  userWorkSchedule: [UserWorkSchedule]!
+  userWorkSchedule(id: Int!): UserWorkSchedule
+}
+
+type Mutation {
+  createUserWorkSchedule(createUserWorkScheduleInput: CreateUserWorkScheduleInput!): UserWorkSchedule!
+  updateUserWorkSchedule(updateUserWorkScheduleInput: UpdateUserWorkScheduleInput!): UserWorkSchedule!
+  removeUserWorkSchedule(id: Int!): UserWorkSchedule
+}

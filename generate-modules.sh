@@ -6,6 +6,6 @@ modules=("education" "language" "work" "skills" "certifications" "personality-tr
 # 迭代模組名稱並生成模組
 for module in "${modules[@]}"
 do
-  echo "Generating module: $module"
-  nest generate resource $module --no-spec
+  echo "Generating module: user-$module"
+  nest generate resource user-$module --no-spec
 done

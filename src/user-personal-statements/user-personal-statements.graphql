@@ -1,0 +1,24 @@
+type UserPersonalStatement {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserPersonalStatementInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserPersonalStatementInput {
+  id: Int!
+}
+
+type Query {
+  userPersonalStatements: [UserPersonalStatement]!
+  userPersonalStatement(id: Int!): UserPersonalStatement
+}
+
+type Mutation {
+  createUserPersonalStatement(createUserPersonalStatementInput: CreateUserPersonalStatementInput!): UserPersonalStatement!
+  updateUserPersonalStatement(updateUserPersonalStatementInput: UpdateUserPersonalStatementInput!): UserPersonalStatement!
+  removeUserPersonalStatement(id: Int!): UserPersonalStatement
+}

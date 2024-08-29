@@ -1,0 +1,24 @@
+type UserEmergencyContact {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserEmergencyContactInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserEmergencyContactInput {
+  id: Int!
+}
+
+type Query {
+  userEmergencyContacts: [UserEmergencyContact]!
+  userEmergencyContact(id: Int!): UserEmergencyContact
+}
+
+type Mutation {
+  createUserEmergencyContact(createUserEmergencyContactInput: CreateUserEmergencyContactInput!): UserEmergencyContact!
+  updateUserEmergencyContact(updateUserEmergencyContactInput: UpdateUserEmergencyContactInput!): UserEmergencyContact!
+  removeUserEmergencyContact(id: Int!): UserEmergencyContact
+}

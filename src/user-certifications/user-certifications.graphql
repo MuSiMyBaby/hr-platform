@@ -1,0 +1,24 @@
+type UserCertification {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserCertificationInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserCertificationInput {
+  id: Int!
+}
+
+type Query {
+  userCertifications: [UserCertification]!
+  userCertification(id: Int!): UserCertification
+}
+
+type Mutation {
+  createUserCertification(createUserCertificationInput: CreateUserCertificationInput!): UserCertification!
+  updateUserCertification(updateUserCertificationInput: UpdateUserCertificationInput!): UserCertification!
+  removeUserCertification(id: Int!): UserCertification
+}

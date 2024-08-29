@@ -1,0 +1,24 @@
+type UserJobType {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserJobTypeInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserJobTypeInput {
+  id: Int!
+}
+
+type Query {
+  userJobType: [UserJobType]!
+  userJobType(id: Int!): UserJobType
+}
+
+type Mutation {
+  createUserJobType(createUserJobTypeInput: CreateUserJobTypeInput!): UserJobType!
+  updateUserJobType(updateUserJobTypeInput: UpdateUserJobTypeInput!): UserJobType!
+  removeUserJobType(id: Int!): UserJobType
+}

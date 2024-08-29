@@ -1,0 +1,24 @@
+type UserTransportation {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateUserTransportationInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateUserTransportationInput {
+  id: Int!
+}
+
+type Query {
+  userTransportation: [UserTransportation]!
+  userTransportation(id: Int!): UserTransportation
+}
+
+type Mutation {
+  createUserTransportation(createUserTransportationInput: CreateUserTransportationInput!): UserTransportation!
+  updateUserTransportation(updateUserTransportationInput: UpdateUserTransportationInput!): UserTransportation!
+  removeUserTransportation(id: Int!): UserTransportation
+}
