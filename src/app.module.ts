@@ -67,12 +67,14 @@ import { UserPhotosModule } from '@user-photos/user-photos.module';
         UserPortfolio,
         UserPhoto,
       ],
-      synchronize: true, // 開發環境中使用，生產環境應設為 false 並使用遷移工具
+      synchronize: true, // 適合開發環境，不適合生產
+      logging: true, // 開啟 SQL 日誌記錄
+      autoLoadEntities: true, // 自動載入模組中的實體
     }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    /*     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-    }),
+    }), */
     UsersModule,
     RolesModule,
     //ResumesModule,
