@@ -3,13 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
 
-@Injectable()
+@Injectable() //它可以作為 DI 使用，也就是引入其他類裡面。
 export class UsersService {
-  //它可以作為 DI 使用，也就是引入其他類裡面。
   constructor(
-    @InjectRepository(User)
+    @InjectRepository(User) //把 @InjectRepository(User) 裝飾器+DI 可以操作USERs CRUD
     private usersRepository: Repository<User>,
-  ) {}
+  ) {} // 省略了  this.usersRepository = @InjectRepository(User) // TS不需要寫這句
 
   create(userData: Partial<User>): Promise<User> {
     const newUser = this.usersRepository.create(userData);
