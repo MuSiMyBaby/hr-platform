@@ -1,0 +1,82 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: String!
+  identityNumber: String
+  workPermit: String
+  passport: String
+  email: String!
+  phoneNumber: String!
+  profilePicture: String
+  firstName: String!
+  lastName: String!
+  englishName: String
+  nickname: String
+  address: String
+  skipRegistration: Boolean!
+  password: String!
+  verificationCode: String
+  googleLogin: Boolean
+  facebookLogin: Boolean
+  instagramLogin: Boolean
+  lastLogin: DateTime
+  lastLoginIp: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deleteAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  findAll: [User!]!
+  findAllUserWithDeleted: [User!]!
+  findOne(id: String!): User!
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  updateUser(id: String!, updateUserInput: UpdateUserInput!): User!
+  removeUser(id: String!): Boolean!
+}
+
+input CreateUserInput {
+  email: String!
+  phoneNumber: String!
+  firstName: String!
+  lastName: String!
+  identityNumber: String
+  workPermit: String
+  passport: String
+  profilePicture: String
+  password: String!
+  googleLogin: Boolean
+  facebookLogin: Boolean
+  instagramLogin: Boolean
+  lastLogin: DateTime
+  lastLoginIp: String
+  roleId: Float
+}
+
+input UpdateUserInput {
+  email: String
+  phoneNumber: String
+  firstName: String
+  lastName: String
+  identityNumber: String
+  workPermit: String
+  passport: String
+  profilePicture: String
+  password: String
+  googleLogin: Boolean
+  facebookLogin: Boolean
+  instagramLogin: Boolean
+  lastLogin: DateTime
+  lastLoginIp: String
+  roleId: Float
+}

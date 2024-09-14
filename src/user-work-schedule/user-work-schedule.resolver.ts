@@ -5,10 +5,15 @@ import { UpdateUserWorkScheduleInput } from './dto/update-user-work-schedule.inp
 
 @Resolver('UserWorkSchedule')
 export class UserWorkScheduleResolver {
-  constructor(private readonly userWorkScheduleService: UserWorkScheduleService) {}
+  constructor(
+    private readonly userWorkScheduleService: UserWorkScheduleService,
+  ) {}
 
   @Mutation('createUserWorkSchedule')
-  create(@Args('createUserWorkScheduleInput') createUserWorkScheduleInput: CreateUserWorkScheduleInput) {
+  create(
+    @Args('createUserWorkScheduleInput')
+    createUserWorkScheduleInput: CreateUserWorkScheduleInput,
+  ) {
     return this.userWorkScheduleService.create(createUserWorkScheduleInput);
   }
 
@@ -23,8 +28,14 @@ export class UserWorkScheduleResolver {
   }
 
   @Mutation('updateUserWorkSchedule')
-  update(@Args('updateUserWorkScheduleInput') updateUserWorkScheduleInput: UpdateUserWorkScheduleInput) {
-    return this.userWorkScheduleService.update(updateUserWorkScheduleInput.id, updateUserWorkScheduleInput);
+  update(
+    @Args('updateUserWorkScheduleInput')
+    updateUserWorkScheduleInput: UpdateUserWorkScheduleInput,
+  ) {
+    return this.userWorkScheduleService.update(
+      updateUserWorkScheduleInput.id,
+      updateUserWorkScheduleInput,
+    );
   }
 
   @Mutation('removeUserWorkSchedule')

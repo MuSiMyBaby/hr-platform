@@ -5,10 +5,15 @@ import { UpdateUserTransportationInput } from './dto/update-user-transportation.
 
 @Resolver('UserTransportation')
 export class UserTransportationResolver {
-  constructor(private readonly userTransportationService: UserTransportationService) {}
+  constructor(
+    private readonly userTransportationService: UserTransportationService,
+  ) {}
 
   @Mutation('createUserTransportation')
-  create(@Args('createUserTransportationInput') createUserTransportationInput: CreateUserTransportationInput) {
+  create(
+    @Args('createUserTransportationInput')
+    createUserTransportationInput: CreateUserTransportationInput,
+  ) {
     return this.userTransportationService.create(createUserTransportationInput);
   }
 
@@ -23,8 +28,14 @@ export class UserTransportationResolver {
   }
 
   @Mutation('updateUserTransportation')
-  update(@Args('updateUserTransportationInput') updateUserTransportationInput: UpdateUserTransportationInput) {
-    return this.userTransportationService.update(updateUserTransportationInput.id, updateUserTransportationInput);
+  update(
+    @Args('updateUserTransportationInput')
+    updateUserTransportationInput: UpdateUserTransportationInput,
+  ) {
+    return this.userTransportationService.update(
+      updateUserTransportationInput.id,
+      updateUserTransportationInput,
+    );
   }
 
   @Mutation('removeUserTransportation')

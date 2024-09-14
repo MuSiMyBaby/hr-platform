@@ -1,10 +1,18 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  DeleteDateColumn,
+} from 'typeorm';
 import { User } from '@users/entities/users.entity';
 
 @Entity()
 export class UserEducation {
   @PrimaryGeneratedColumn()
   id: number;
+  @DeleteDateColumn({ nullable: true })
+  deletedAt: Date;
 
   @Column()
   school: string;
@@ -20,10 +28,10 @@ export class UserEducation {
 
   @Column({ type: 'date', nullable: true })
   endDate: Date;
-
+  /* 
   @ManyToOne(() => User, (user) => user.educations, {
     cascade: true,
     onDelete: 'CASCADE',
-  })
+  }) */
   user: User;
 }

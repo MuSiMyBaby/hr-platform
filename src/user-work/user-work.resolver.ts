@@ -8,7 +8,9 @@ export class UserWorkResolver {
   constructor(private readonly userWorkService: UserWorkService) {}
 
   @Mutation('createUserWork')
-  create(@Args('createUserWorkInput') createUserWorkInput: CreateUserWorkInput) {
+  create(
+    @Args('createUserWorkInput') createUserWorkInput: CreateUserWorkInput,
+  ) {
     return this.userWorkService.create(createUserWorkInput);
   }
 
@@ -23,8 +25,13 @@ export class UserWorkResolver {
   }
 
   @Mutation('updateUserWork')
-  update(@Args('updateUserWorkInput') updateUserWorkInput: UpdateUserWorkInput) {
-    return this.userWorkService.update(updateUserWorkInput.id, updateUserWorkInput);
+  update(
+    @Args('updateUserWorkInput') updateUserWorkInput: UpdateUserWorkInput,
+  ) {
+    return this.userWorkService.update(
+      updateUserWorkInput.id,
+      updateUserWorkInput,
+    );
   }
 
   @Mutation('removeUserWork')

@@ -18,7 +18,8 @@
       "@user-emergency-contacts/*": ["src/user-emergency-contacts/*"],
       "@user-personal-statements/*": ["src/user-personal-statements/*"],
       "@user-portfolios/*": ["src/user-portfolios/*"],
-      "@user-photos/*": ["src/user-photos/*"]
+      "@user-photos/*": ["src/user-photos/*"],
+      "@validators/*": ["src/validators/*"]
     },
     "declaration": true,
     "removeComments": true,
