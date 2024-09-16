@@ -19,7 +19,8 @@
       "@user-personal-statements/*": ["src/user-personal-statements/*"],
       "@user-portfolios/*": ["src/user-portfolios/*"],
       "@user-photos/*": ["src/user-photos/*"],
-      "@validators/*": ["src/_validators/*"]
+      "@validators/*": ["src/_validators/*"],
+      "@auth/*": ["src/_auth/*"]
     },
     "declaration": true,
     "removeComments": true,
