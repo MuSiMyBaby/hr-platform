@@ -19,7 +19,7 @@
       "@user-personal-statements/*": ["src/user-personal-statements/*"],
       "@user-portfolios/*": ["src/user-portfolios/*"],
       "@user-photos/*": ["src/user-photos/*"],
-      "@validators/*": ["src/validators/*"]
+      "@validators/*": ["src/_validators/*"]
     },
     "declaration": true,
     "removeComments": true,

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'; // 引入 NestJS 的 Injectable 裝
 import { InjectRepository } from '@nestjs/typeorm'; // 引入 InjectRepository 裝飾器，用於將 Repository 注入 Service
 import { Repository } from 'typeorm'; // 引入 TypeORM 的 Repository
 import { User } from './entities/users.entity'; // 引入 User 實體
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt'; // 引入 bcrypt 來處理密碼加密
 
 @Injectable() // Injectable 裝飾器讓該類可以被依賴注入
 export class UsersService {
@@ -12,8 +12,13 @@ export class UsersService {
   ) {} // Constructor 中省略了 this.usersRepository = @InjectRepository(User)  這類代碼，TypeScript 不需要明確寫出
 
   // 創建新的使用者
-  create(userData: Partial<User>): Promise<User> {
-    const newUser = this.usersRepository.create(userData); // 使用 create 方法生成一個新的 User 實體
+  async create(userData: Partial<User>): Promise<User> {
+    const { password, ...restUsesData } = userData;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = this.usersRepository.create({
+      ...restUsesData,
+      password: hashedPassword,
+    }); // 使用 create 方法生成一個新的 User 實體
     return this.usersRepository.save(newUser); // 將新實體保存到資料庫
   }
 
@@ -29,6 +34,9 @@ export class UsersService {
 
   // 更新使用者資料
   async update(id: string, updateData: Partial<User>): Promise<User> {
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10); // 加密新密碼
+    }
     await this.usersRepository.update(id, updateData); // 使用 update 方法更新 User 資料
     return this.findOne(id); // 更新後返回更新的 User 實體
   }

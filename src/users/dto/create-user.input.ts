@@ -9,9 +9,9 @@ import {
   IsNumber,
   //MinLength,
 } from 'class-validator';
-import { IsTaiwanID } from '@validators/taiwan-id-validator'; // 加入自定義台灣身分證驗證
-import { IsPassportNumber } from '@validators/passport-validator'; // 加入自定義護照號碼驗證
-import { IsTaiwanPhoneNumber } from '@validators/taiwan-phone-validator'; // phone validation
+import { IsTaiwanID } from 'src/_validators/taiwan-id-validator'; // 加入自定義台灣身分證驗證
+import { IsPassportNumber } from 'src/_validators/passport-validator'; // 加入自定義護照號碼驗證
+import { IsTaiwanPhoneNumber } from 'src/_validators/taiwan-phone-validator'; // phone validation
 
 @InputType()
 export class CreateUserInput {

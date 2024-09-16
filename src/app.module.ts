@@ -4,7 +4,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
-import { UsersConfig } from './config/typeorm.config';
+import { UsersConfig } from './_config/typeorm.config';
 import { User } from '@users/entities/users.entity';
 /* import { Role } from '@roles/entities/role.entity';
 import { UserEducation } from '@user-education/entities/user-education.entity';
