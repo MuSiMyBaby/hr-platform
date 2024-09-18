@@ -1,48 +1,41 @@
-import { Module } from '@nestjs/common'; // Importing NestJS's Module decorator, which is used to define a module.
-import { JwtModule } from '@nestjs/jwt'; // Importing JwtModule, which allows you to create and manage JWTs (tokens).
-import { PassportModule } from '@nestjs/passport'; // Importing PassportModule, used to manage various authentication strategies.
-
-import { AuthService } from './auth.service'; // AuthService handles the authentication logic (login, token generation, etc.).
-import { JwtStrategy } from './jwt.strategy'; // JWT strategy is used for validating JWT tokens during requests.
-
-import { GoogleStrategy } from './google.strategy'; // Google OAuth strategy for authenticating users via Google.
-import { FacebookStrategy } from './facebook.strategy'; // Facebook OAuth strategy for authenticating users via Facebook.
-import { InstagramStrategy } from './instagram.strategy'; // Instagram OAuth strategy for authenticating users via Instagram.
-
-import { UsersModule } from '../users/users.module'; // UsersModule is where user-related operations, such as user lookup, are managed.
-import { AuthResolver } from './auth.resolver'; // AuthResolver is the GraphQL resolver that handles authentication-related requests like login.
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
+import { GoogleStrategy } from './google.strategy';
+import { FacebookStrategy } from './facebook.strategy';
+import { InstagramStrategy } from './instagram.strategy';
+import { UsersModule } from '@users/users.module';
+import { AuthResolver } from './auth.resolver';
+import { AuthConfig } from '@validators/auth.validator'; // 引入配置文件
 
 @Module({
-  // The `imports` section specifies external modules that are imported into the `AuthModule`.
   imports: [
-    // PassportModule is used to manage authentication strategies like JWT, Google, Facebook, etc.
-    PassportModule.register({ defaultStrategy: 'jwt' }), // Registering Passport with JWT as the default strategy for authentication.
-
-    // JwtModule configures the JWT secret and other settings like expiration time for tokens.
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'defaultSecret', // Secret used to sign JWT tokens; it's pulled from the environment variables or uses a default if not set.
-      signOptions: { expiresIn: '30m' }, // Token expiration time is set to 30 minutes.
+    ConfigModule, // 確保可以使用環境變數
+    PassportModule.register({ defaultStrategy: 'jwt' }), // 默認使用 JWT 策略
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        ...AuthConfig(configService), // 從 auth.config.ts 獲取配置
+        signOptions: {
+          algorithm: 'RS256',
+          expiresIn: AuthConfig(configService).expiresIn,
+        }, // 設定簽名選項
+      }),
     }),
-
-    UsersModule, // Import UsersModule to access user data (e.g., fetching user information during login).
+    UsersModule,
   ],
-
-  // The `providers` section lists the classes (services, strategies, resolvers) that this module will provide.
   providers: [
-    AuthService, // Provides the AuthService, which handles the core authentication logic (login, token generation).
-
-    JwtStrategy, // Provides the JwtStrategy, which validates JWT tokens.
-
-    GoogleStrategy, // Provides the GoogleStrategy, which handles OAuth-based authentication via Google.
-
-    FacebookStrategy, // Provides the FacebookStrategy, which handles OAuth-based authentication via Facebook.
-
-    InstagramStrategy, // Provides the InstagramStrategy, which handles OAuth-based authentication via Instagram.
-
-    AuthResolver, // Provides the AuthResolver, responsible for handling GraphQL mutations like login.
+    AuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    FacebookStrategy,
+    InstagramStrategy,
+    AuthResolver,
   ],
-
-  // The `exports` section allows other modules to access the AuthService (e.g., if another module needs to validate tokens).
-  exports: [AuthService], // Exporting AuthService for use in other parts of the application if needed.
+  exports: [AuthService],
 })
-export class AuthModule {} // Exporting the AuthModule, which contains all the necessary logic for handling authentication.
+export class AuthModule {}

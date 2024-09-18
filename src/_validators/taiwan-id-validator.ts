@@ -1,5 +1,4 @@
 import {
-  isArray, // 檢查是否為陣列
   registerDecorator, // 註冊自訂的驗證器
   ValidationOptions, // 定義驗證選項，包含錯誤訊息等
   ValidatorConstraint, // 用於定義一個驗證器的限制條件

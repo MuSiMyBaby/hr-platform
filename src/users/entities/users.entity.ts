@@ -122,6 +122,18 @@ export class User {
   @DeleteDateColumn({ nullable: true }) // 啟用軟刪除
   deleteAt: Date;
 
+  @Field()
+  @Column()
+  securityAnswer1: string;
+
+  @Field()
+  @Column()
+  securityAnswer2: string;
+
+  @Field()
+  @Column()
+  securityAnswer3: string;
+
   /*  @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.user)
   languages: UserLanguage[];
 
