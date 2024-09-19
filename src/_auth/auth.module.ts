@@ -9,7 +9,7 @@ import { FacebookStrategy } from './facebook.strategy';
 import { InstagramStrategy } from './instagram.strategy';
 import { UsersModule } from '@users/users.module';
 import { AuthResolver } from './auth.resolver';
-import { AuthConfig } from '@validators/auth.validator'; // 引入配置文件
+import { AuthConfig } from '@config/auth.config'; // 引入配置文件
 
 @Module({
   imports: [

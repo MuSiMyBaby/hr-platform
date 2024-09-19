@@ -13,11 +13,23 @@ export class UsersService {
 
   // 創建新的使用者
   async create(userData: Partial<User>): Promise<User> {
-    const { password, ...restUsesData } = userData;
+    const {
+      password,
+      securityAnswer1,
+      securityAnswer2,
+      securityAnswer3,
+      ...restUsesData
+    } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedAnswer1 = await bcrypt.hash(securityAnswer1, 10);
+    const hashedAnswer2 = await bcrypt.hash(securityAnswer2, 10);
+    const hashedAnswer3 = await bcrypt.hash(securityAnswer3, 10);
     const newUser = this.usersRepository.create({
       ...restUsesData,
       password: hashedPassword,
+      securityAnswer1: hashedAnswer1,
+      securityAnswer2: hashedAnswer2,
+      securityAnswer3: hashedAnswer3,
     }); // 使用 create 方法生成一個新的 User 實體
     return this.usersRepository.save(newUser); // 將新實體保存到資料庫
   }

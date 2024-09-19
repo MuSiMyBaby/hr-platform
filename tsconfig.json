@@ -20,7 +20,8 @@
       "@user-portfolios/*": ["src/user-portfolios/*"],
       "@user-photos/*": ["src/user-photos/*"],
       "@validators/*": ["src/_validators/*"],
-      "@auth/*": ["src/_auth/*"]
+      "@auth/*": ["src/_auth/*"],
+      "@config/*": ["src/_config/*"]
     },
     "declaration": true,
     "removeComments": true,
