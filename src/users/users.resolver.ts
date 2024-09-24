@@ -10,16 +10,16 @@ export class UsersResolver {
 
   @Query(() => [User]) // GraphQL 查詢用 返回User.entity格式，返回 User 實體的陣列
   findAll() {
-    return this.usersService.findAll(); // 調用 UsersService 來獲取所有使用者
+    return this.usersService.findAllUsers(); // 調用 UsersService 來獲取所有使用者
   }
   @Query(() => [User])
   findAllUserWithDeleted() {
-    return this.usersService.findAllWithDeleted();
+    return this.usersService.findAllUsersWithDeleted();
   }
 
   @Query(() => User) // GraphQL 查詢，根據 ID 查詢單一使用者
   findOne(@Args('id', { type: () => String }) id: string) {
-    return this.usersService.findOne(id); // 調用 UsersService 來獲取指定 ID 的使用者
+    return this.usersService.findOneUser(id); // 調用 UsersService 來獲取指定 ID 的使用者
   }
 
   @Mutation(() => User) // GraphQL 變更，創建新使用者
@@ -32,11 +32,11 @@ export class UsersResolver {
     @Args('id', { type: () => String }) id: string, // 接受使用者 ID 參數
     @Args('updateUserInput') updateUserInput: UpdateUserInput, // 接受更新使用者資料的參數
   ) {
-    return this.usersService.update(id, updateUserInput); // 調用 UsersService 來更新指定 ID 的使用者
+    return this.usersService.updateUser(id, updateUserInput); // 調用 UsersService 來更新指定 ID 的使用者
   }
 
   @Mutation(() => Boolean) // GraphQL 變更，刪除使用者
   removeUser(@Args('id', { type: () => String }) id: string) {
-    return this.usersService.remove(id); // 調用 UsersService 來刪除指定 ID 的使用者
+    return this.usersService.removeUser(id); // 調用 UsersService 來刪除指定 ID 的使用者
   }
 }

@@ -7,21 +7,6 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { ObjectType, Field } from '@nestjs/graphql';
-/* import { UserLanguage } from '@user-language/entities/user-language.entity';
-import { UserEducation } from '@user-education/entities/user-education.entity';
-import { UserWork } from '@user-work/entities/user-work.entity';
-import { UserSkill } from '@user-skills/entities/user-skill.entity';
-import { UserCertification } from '@user-certifications/entities/user-certification.entity';
-import { UserPersonalityTrait } from '@user-personality-traits/entities/user-personality-trait.entity';
-import { UserTransportation } from '@user-transportation/entities/user-transportation.entity';
-import { UserWorkSchedule } from '@user-work-schedule/entities/user-work-schedule.entity';
-import { UserEmploymentStatus } from '@user-employment-status/entities/user-employment-status.entity';
-import { UserJobType } from '@user-job-type/entities/user-job-type.entity';
-import { UserEmergencyContact } from '@user-emergency-contacts/entities/user-emergency-contact.entity';
-import { UserPersonalStatement } from '@user-personal-statements/entities/user-personal-statement.entity';
-import { UserPortfolio } from '@user-portfolios/entities/user-portfolio.entity';
-import { UserPhoto } from '@user-photos/entities/user-photo.entity';
-import { Role } from '@roles/entities/role.entity'; */
 
 @ObjectType() // 將這個實體暴露為 GraphQL 的物件-> @Mutation(=>Users)接收
 @Entity()
@@ -30,87 +15,140 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Field({ nullable: true }) // GraphQL 查詢時此欄位可選
+  @Field({ nullable: true }) // 身份證號
   @Column({ nullable: true, unique: true })
   identityNumber: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // 工作許可證
   @Column({ nullable: true, unique: true })
   workPermit: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // 護照號碼
   @Column({ nullable: true, unique: true })
   passport: string;
 
-  @Field() // GraphQL 需要返回 email
+  @Field() // 信箱
   @Column({ unique: true })
   email: string;
 
-  @Field() // GraphQL 需要返回 phoneNumber
+  @Field({ defaultValue: false }) // 信箱驗證
+  @Column({ default: false })
+  emailVerified: boolean;
+
+  @Field() // 手機號碼
   @Column({ unique: true })
   phoneNumber: string;
 
-  @Field({ nullable: true }) // 可選欄位
+  @Field({ defaultValue: false }) // 手機驗證
+  @Column({ default: false })
+  phoneVerified: boolean;
+
+  @Field({ nullable: true }) // 使用者大頭照
   @Column({ nullable: true })
   profilePicture: string;
 
-  @Field() // GraphQL 需要返回 firstName
+  @Field() // 名字
   @Column()
   firstName: string;
 
-  @Field() // GraphQL 需要返回 lastName
+  @Field() // 姓氏
   @Column()
   lastName: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // 英文名字
   @Column({ nullable: true })
   englishName: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // 暱稱
   @Column({ nullable: true })
   nickname: string;
 
-  @Field({ nullable: true })
+  // 拆分地址部分
+  @Field({ nullable: true }) // 國家
   @Column({ nullable: true })
-  address: string;
+  mailCountry: string;
 
-  @Field({ defaultValue: false }) // GraphQL 默認值
+  @Field({ nullable: true }) // 城市
+  @Column({ nullable: true })
+  mailCity: string;
+
+  @Field({ nullable: true }) // 區域
+  @Column({ nullable: true })
+  mailDistrict: string;
+
+  @Field({ nullable: true }) // 完整地址
+  @Column({ nullable: true })
+  mailAddress: string;
+
+  @Field({ nullable: true }) // 國家
+  @Column({ nullable: true })
+  residentialCountry: string;
+
+  @Field({ nullable: true }) // 城市
+  @Column({ nullable: true })
+  residentialCity: string;
+
+  @Field({ nullable: true }) // 區域
+  @Column({ nullable: true })
+  residentialDistrict: string;
+
+  @Field({ nullable: true }) // 完整地址
+  @Column({ nullable: true })
+  residentialAddress: string;
+
+  @Field({ defaultValue: false }) // 略過註冊流程標誌
   @Column({ default: false })
   skipRegistration: boolean;
 
-  @Field() // 密碼一般不應公開查詢
+  @Field() // 密碼
   @Column()
   password: string;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // 最後一次重設密碼時間
+  @Column({ nullable: true })
+  lastPasswordReset: Date;
+
+  @Field({ nullable: true }) // 驗證碼
   @Column({ nullable: true })
   verificationCode: string;
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  googleLogin: boolean;
+  resetToken: string;
 
   @Field({ nullable: true })
+  @Column({ nullable: true })
+  resetTokenExpiry: Date;
+
+  @Field({ nullable: true }) // Google 登入
+  @Column({ nullable: true })
+  googleLogin: boolean;
+
+  @Field({ defaultValue: false }) // 是否完成註冊流程
+  @Column({ default: false })
+  isRegistered: boolean;
+
+  @Field({ nullable: true }) // Facebook 登入
   @Column({ nullable: true })
   facebookLogin: boolean;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true }) // Instagram 登入
   @Column({ nullable: true })
   instagramLogin: boolean;
 
-  @Field({ nullable: true }) // GraphQL 可以返回上次登錄時間
+  @Field({ nullable: true }) // 最後登入時間
   @Column({ nullable: true })
   lastLogin: Date;
 
-  @Field({ nullable: true })
+  /*   @Field({ nullable: true }) // 最後登入 IP
   @Column({ nullable: true })
-  lastLoginIp: string;
+  lastLoginIp: string; */
 
-  @Field() // 必須返回 createdAt 時間戳
+  @Field() // 創建時間
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Field() // 必須返回 updatedAt 時間戳
+  @Field() // 更新時間
   @Column({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -118,21 +156,29 @@ export class User {
   })
   updatedAt: Date;
 
-  @Field({ nullable: true }) // 可選的刪除時間
-  @DeleteDateColumn({ nullable: true }) // 啟用軟刪除
+  @Field({ nullable: true }) // 軟刪除標記
+  @DeleteDateColumn({ nullable: true })
   deleteAt: Date;
 
-  @Field()
+  @Field() // 安全回答1
   @Column()
   securityAnswer1: string;
 
-  @Field()
+  @Field() // 安全回答2
   @Column()
   securityAnswer2: string;
 
-  @Field()
+  @Field() // 安全回答3
   @Column()
   securityAnswer3: string;
+
+  @Field({ defaultValue: 0 }) // 登入失敗次數
+  @Column({ default: 0 })
+  failedLoginAttempts: number;
+
+  @Field({ defaultValue: false }) // 帳號鎖定
+  @Column({ default: false })
+  accountLocked: boolean;
 
   /*  @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.user)
   languages: UserLanguage[];
@@ -146,49 +192,28 @@ export class User {
   @OneToMany(() => UserSkill, (userSkill) => userSkill.user)
   skills: UserSkill[];
 
-  @OneToMany(
-    () => UserCertification,
-    (userCertification) => userCertification.user,
-  )
+  @OneToMany(() => UserCertification, (userCertification) => userCertification.user)
   certifications: UserCertification[];
 
-  @OneToMany(
-    () => UserPersonalityTrait,
-    (userPersonalityTrait) => userPersonalityTrait.user,
-  )
+  @OneToMany(() => UserPersonalityTrait, (userPersonalityTrait) => userPersonalityTrait.user)
   personalityTraits: UserPersonalityTrait[];
 
-  @OneToMany(
-    () => UserTransportation,
-    (userTransportation) => userTransportation.user,
-  )
+  @OneToMany(() => UserTransportation, (userTransportation) => userTransportation.user)
   transportation: UserTransportation[];
 
-  @OneToMany(
-    () => UserWorkSchedule,
-    (userWorkSchedule) => userWorkSchedule.user,
-  )
+  @OneToMany(() => UserWorkSchedule, (userWorkSchedule) => userWorkSchedule.user)
   workSchedules: UserWorkSchedule[];
 
-  @OneToMany(
-    () => UserEmploymentStatus,
-    (userEmploymentStatus) => userEmploymentStatus.user,
-  )
+  @OneToMany(() => UserEmploymentStatus, (userEmploymentStatus) => userEmploymentStatus.user)
   employmentStatuses: UserEmploymentStatus[];
 
   @OneToMany(() => UserJobType, (userJobType) => userJobType.user)
   jobTypes: UserJobType[];
 
-  @OneToMany(
-    () => UserEmergencyContact,
-    (userEmergencyContact) => userEmergencyContact.user,
-  )
+  @OneToMany(() => UserEmergencyContact, (userEmergencyContact) => userEmergencyContact.user)
   emergencyContacts: UserEmergencyContact[];
 
-  @OneToMany(
-    () => UserPersonalStatement,
-    (userPersonalStatement) => userPersonalStatement.user,
-  )
+  @OneToMany(() => UserPersonalStatement, (userPersonalStatement) => userPersonalStatement.user)
   personalStatements: UserPersonalStatement[];
 
   @OneToMany(() => UserPortfolio, (userPortfolio) => userPortfolio.user)
@@ -196,7 +221,16 @@ export class User {
 
   @OneToMany(() => UserPhoto, (userPhoto) => userPhoto.user)
   photos: UserPhoto[];
+   
+    // 不再單獨存儲最後的登入 IP，改為建立與 user-ip 的 OneToMany 關係
+  @OneToMany(() => UserIp, (userIp) => userIp.user)
+  userIps: UserIp[];
 
+  // 不再單獨存儲裝置資訊，改為建立與 user-device 的 OneToMany 關係
+  @OneToMany(() => UserDevice, (userDevice) => userDevice.user)
+  userDevices: UserDevice[];
+  
   @ManyToOne(() => Role, (role) => role.users)
-  role: Role; */
+  role: Role;
+  */
 }

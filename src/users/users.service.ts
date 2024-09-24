@@ -1,69 +1,237 @@
-import { Injectable } from '@nestjs/common'; // 引入 NestJS 的 Injectable 裝飾器，用於依賴注入
-import { InjectRepository } from '@nestjs/typeorm'; // 引入 InjectRepository 裝飾器，用於將 Repository 注入 Service
-import { Repository } from 'typeorm'; // 引入 TypeORM 的 Repository
-import { User } from './entities/users.entity'; // 引入 User 實體
-import * as bcrypt from 'bcrypt'; // 引入 bcrypt 來處理密碼加密
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/users.entity';
+import * as bcrypt from 'bcrypt';
 
-@Injectable() // Injectable 裝飾器讓該類可以被依賴注入
+@Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) // InjectRepository 裝飾器將 User Repository 注入，允許操作 User 實體的 CRUD
+    @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {} // Constructor 中省略了 this.usersRepository = @InjectRepository(User)  這類代碼，TypeScript 不需要明確寫出
+  ) {}
 
-  // 創建新的使用者
+  // 創建新使用者，並加密密碼和安全回答
   async create(userData: Partial<User>): Promise<User> {
-    const {
-      password,
-      securityAnswer1,
-      securityAnswer2,
-      securityAnswer3,
-      ...restUsesData
-    } = userData;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const hashedAnswer1 = await bcrypt.hash(securityAnswer1, 10);
-    const hashedAnswer2 = await bcrypt.hash(securityAnswer2, 10);
-    const hashedAnswer3 = await bcrypt.hash(securityAnswer3, 10);
-    const newUser = this.usersRepository.create({
-      ...restUsesData,
-      password: hashedPassword,
-      securityAnswer1: hashedAnswer1,
-      securityAnswer2: hashedAnswer2,
-      securityAnswer3: hashedAnswer3,
-    }); // 使用 create 方法生成一個新的 User 實體
-    return this.usersRepository.save(newUser); // 將新實體保存到資料庫
-  }
+    try {
+      const {
+        password,
+        securityAnswer1,
+        securityAnswer2,
+        securityAnswer3,
+        ...restUsesData
+      } = userData;
 
-  // 查詢所有使用者
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find(); // 使用 find 方法獲取所有 User 實體
-  }
+      // 加密密碼和安全回答
+      const hashedPassword = await this.hashValue(password);
+      const hashedAnswer1 = await this.hashValue(securityAnswer1);
+      const hashedAnswer2 = await this.hashValue(securityAnswer2);
+      const hashedAnswer3 = await this.hashValue(securityAnswer3);
 
-  // 根據 ID 查詢單一使用者
-  findOne(id: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { id } }); // 使用 findOne 方法根據 ID 獲取指定的 User 實體
-  }
+      // 創建新使用者物件
+      const newUser = this.usersRepository.create({
+        ...restUsesData,
+        password: hashedPassword,
+        securityAnswer1: hashedAnswer1,
+        securityAnswer2: hashedAnswer2,
+        securityAnswer3: hashedAnswer3,
+      });
 
-  // 更新使用者資料
-  async update(id: string, updateData: Partial<User>): Promise<User> {
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10); // 加密新密碼
+      // 儲存新使用者到資料庫
+      return this.usersRepository.save(newUser);
+    } catch (error) {
+      // 捕獲錯誤，並可能拋出異常
+      throw new Error('Failed to create user');
     }
-    await this.usersRepository.update(id, updateData); // 使用 update 方法更新 User 資料
-    return this.findOne(id); // 更新後返回更新的 User 實體
   }
 
-  // 軟刪除使用者
-  async remove(id: string): Promise<void> {
-    const user = await this.findOne(id); // 首先找到使用者
-    await this.usersRepository.softRemove(user); // 使用 softRemove 進行軟刪除（實際上不會從資料庫刪除，只會標記為刪除狀態）
+  // 查詢所有使用者，選擇必要欄位
+  async findAllUsers(): Promise<User[]> {
+    try {
+      return this.usersRepository.find({
+        select: [
+          'id',
+          'firstName',
+          'lastName',
+          'email',
+          'phoneNumber',
+          'profilePicture',
+          'nickname',
+          'createdAt',
+          'updatedAt',
+        ],
+      });
+    } catch (error) {
+      throw new Error('Failed to find users');
+    }
   }
-  // 找到包含被軟刪除的使用者
-  async findAllWithDeleted(): Promise<User[]> {
-    return this.usersRepository.find({ withDeleted: true }); // 包含軟刪除的資料
+
+  // 根據 ID 查詢單一使用者，並選擇特定欄位
+  async findOneUser(id: string): Promise<User> {
+    try {
+      return this.usersRepository.findOne({
+        where: { id },
+        relations: ['userIps', 'userDevices'], // 包含IP和裝置關聯
+        select: [
+          'id',
+          'firstName',
+          'lastName',
+          'email',
+          'phoneNumber',
+          'profilePicture',
+          'nickname',
+          'mailCountry',
+          'mailCity',
+          'mailDistrict',
+          'mailAddress',
+          'residentialCountry',
+          'residentialCity',
+          'residentialDistrict',
+          'residentialAddress',
+          'createdAt',
+          'updatedAt',
+          'lastLogin',
+        ],
+      });
+    } catch (error) {
+      throw new Error('Failed to find user');
+    }
   }
-  // 刪除所有資料
+
+  // 查詢使用者以進行登入，返回包括密碼的使用者資料
+  async findUserForLogin(emailOrPhone: string): Promise<User | undefined> {
+    try {
+      return this.usersRepository.findOne({
+        where: [{ email: emailOrPhone }, { phoneNumber: emailOrPhone }],
+        select: ['id', 'email', 'phoneNumber', 'password'], // 密碼是登入所需的敏感資料
+      });
+    } catch (error) {
+      throw new Error('Failed to find user for login');
+    }
+  }
+
+  // 忘記密碼或重設密碼時，根據信箱或電話號碼查詢使用者並返回安全回答
+  async findUserForPassword(emailOrPhone: string): Promise<User | undefined> {
+    try {
+      return this.usersRepository.findOne({
+        where: [{ email: emailOrPhone }, { phoneNumber: emailOrPhone }],
+        select: ['id', 'securityAnswer1', 'securityAnswer2', 'securityAnswer3'],
+      });
+    } catch (error) {
+      throw new Error('Failed to find user for password reset');
+    }
+  }
+
+  // 更新密碼，將新密碼加密後更新到資料庫
+  async updatePasswords(id: string, newPasswords: string): Promise<void> {
+    try {
+      const hashedPassword = await this.hashValue(newPasswords);
+      await this.usersRepository.update(id, { password: hashedPassword });
+    } catch (error) {
+      throw new Error('Failed to update password');
+    }
+  }
+
+  // 更新安全回答，將新答案加密後儲存
+  async updateSecurityAnswers(
+    id: string,
+    newAnswers: { answer1: string; answer2: string; answer3: string },
+  ): Promise<void> {
+    try {
+      const hashedAnswer1 = await this.hashValue(newAnswers.answer1);
+      const hashedAnswer2 = await this.hashValue(newAnswers.answer2);
+      const hashedAnswer3 = await this.hashValue(newAnswers.answer3);
+
+      await this.usersRepository.update(id, {
+        securityAnswer1: hashedAnswer1,
+        securityAnswer2: hashedAnswer2,
+        securityAnswer3: hashedAnswer3,
+      });
+    } catch (error) {
+      throw new Error('Failed to update security answers');
+    }
+  }
+
+  // 更新使用者資料，若有新密碼則加密後儲存
+  async updateUser(id: string, updateData: Partial<User>): Promise<void> {
+    try {
+      if (updateData.password) {
+        updateData.password = await this.hashValue(updateData.password);
+      }
+      await this.usersRepository.update(id, updateData);
+    } catch (error) {
+      throw new Error('Failed to update user');
+    }
+  }
+
+  // 軟刪除使用者，標記為已刪除狀態而不刪除實際資料
+  async removeUser(id: string): Promise<void> {
+    try {
+      const user = await this.findOneUser(id);
+      await this.usersRepository.softRemove(user);
+    } catch (error) {
+      throw new Error('Failed to remove user');
+    }
+  }
+
+  // 查詢包含軟刪除的所有使用者
+  async findAllUsersWithDeleted(): Promise<User[]> {
+    try {
+      return this.usersRepository.find({ withDeleted: true });
+    } catch (error) {
+      throw new Error('Failed to find users with deleted');
+    }
+  }
+
+  // 清空所有使用者資料
   async clearAllUsers(): Promise<void> {
-    await this.usersRepository.clear();
+    try {
+      await this.usersRepository.clear();
+    } catch (error) {
+      throw new Error('Failed to clear all users');
+    }
+  }
+
+  // === 身份驗證相關邏輯，準備移到 auth.service.ts ===
+
+  // 驗證使用者登入憑證
+  async validateUserCredentials(
+    emailOrPhone: string,
+    plainPassword: string,
+  ): Promise<boolean> {
+    const user = await this.findUserForLogin(emailOrPhone);
+    if (!user) {
+      return false;
+    }
+    return await bcrypt.compare(plainPassword, user.password);
+  }
+
+  // 驗證安全回答
+  async validateSecurityAnswers(
+    emailOrPhone: string,
+    answers: { answer1: string; answer2: string; answer3: string },
+  ): Promise<boolean> {
+    const user = await this.findUserForPassword(emailOrPhone);
+    if (!user) return false;
+
+    const isAnswer1Valid = await bcrypt.compare(
+      answers.answer1,
+      user.securityAnswer1,
+    );
+    const isAnswer2Valid = await bcrypt.compare(
+      answers.answer2,
+      user.securityAnswer2,
+    );
+    const isAnswer3Valid = await bcrypt.compare(
+      answers.answer3,
+      user.securityAnswer3,
+    );
+
+    return isAnswer1Valid && isAnswer2Valid && isAnswer3Valid;
+  }
+
+  // 加密方法，用於所有加密操作
+  private async hashValue(value: string): Promise<string> {
+    return await bcrypt.hash(value, 10);
   }
 }
