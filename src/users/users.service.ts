@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
-import * as bcrypt from 'bcrypt';
+import { AuthService } from '@auth/auth.service'; // 引入 AuthService
 
-@Injectable()
+@Injectable() //可注入其他module
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectRepository(User) //前面有imports: [TypeOrmModule.forFeature([User])],告訴 NestJS userService需要DI，我們需要實例化/DI/跟typeorm溝通
+    private usersRepository: Repository<User>,  //TypeORM提供的類型
+    private authService: AuthService, // 注入 AuthService 用於加密等操作
   ) {}
 
   // 創建新使用者，並加密密碼和安全回答
@@ -22,11 +23,11 @@ export class UsersService {
         ...restUsesData
       } = userData;
 
-      // 加密密碼和安全回答
-      const hashedPassword = await this.hashValue(password);
-      const hashedAnswer1 = await this.hashValue(securityAnswer1);
-      const hashedAnswer2 = await this.hashValue(securityAnswer2);
-      const hashedAnswer3 = await this.hashValue(securityAnswer3);
+      // 將密碼和安全回答加密，通過 AuthService 進行加密操作
+      const hashedPassword = await this.authService.hashValue(password);
+      const hashedAnswer1 = await this.authService.hashValue(securityAnswer1);
+      const hashedAnswer2 = await this.authService.hashValue(securityAnswer2);
+      const hashedAnswer3 = await this.authService.hashValue(securityAnswer3);
 
       // 創建新使用者物件
       const newUser = this.usersRepository.create({
@@ -40,8 +41,8 @@ export class UsersService {
       // 儲存新使用者到資料庫
       return this.usersRepository.save(newUser);
     } catch (error) {
-      // 捕獲錯誤，並可能拋出異常
-      throw new Error('Failed to create user');
+      console.error(Error creating user with email ${userData.email}: ${error.message});
+      throw new Error('Failed to create user due to an internal server error');
     }
   }
 
@@ -62,6 +63,7 @@ export class UsersService {
         ],
       });
     } catch (error) {
+      console.error(Error finding all users: ${error.message});
       throw new Error('Failed to find users');
     }
   }
@@ -69,7 +71,7 @@ export class UsersService {
   // 根據 ID 查詢單一使用者，並選擇特定欄位
   async findOneUser(id: string): Promise<User> {
     try {
-      return this.usersRepository.findOne({
+      return this.usersRepository.findOneOrFail({
         where: { id },
         relations: ['userIps', 'userDevices'], // 包含IP和裝置關聯
         select: [
@@ -94,6 +96,7 @@ export class UsersService {
         ],
       });
     } catch (error) {
+      console.error(Error finding user by ID ${id}: ${error.message});
       throw new Error('Failed to find user');
     }
   }
@@ -101,11 +104,13 @@ export class UsersService {
   // 查詢使用者以進行登入，返回包括密碼的使用者資料
   async findUserForLogin(emailOrPhone: string): Promise<User | undefined> {
     try {
+      const normalizedEmailOrPhone = emailOrPhone.toLowerCase(); // 處理大小寫
       return this.usersRepository.findOne({
-        where: [{ email: emailOrPhone }, { phoneNumber: emailOrPhone }],
+        where: [{ email: normalizedEmailOrPhone }, { phoneNumber: normalizedEmailOrPhone }],
         select: ['id', 'email', 'phoneNumber', 'password'], // 密碼是登入所需的敏感資料
       });
     } catch (error) {
+      console.error(Error finding user for login ${emailOrPhone}: ${error.message});
       throw new Error('Failed to find user for login');
     }
   }
@@ -113,42 +118,25 @@ export class UsersService {
   // 忘記密碼或重設密碼時，根據信箱或電話號碼查詢使用者並返回安全回答
   async findUserForPassword(emailOrPhone: string): Promise<User | undefined> {
     try {
+      const normalizedEmailOrPhone = emailOrPhone.toLowerCase();
       return this.usersRepository.findOne({
-        where: [{ email: emailOrPhone }, { phoneNumber: emailOrPhone }],
+        where: [{ email: normalizedEmailOrPhone }, { phoneNumber: normalizedEmailOrPhone }],
         select: ['id', 'securityAnswer1', 'securityAnswer2', 'securityAnswer3'],
       });
     } catch (error) {
+      console.error(Error finding user for password reset ${emailOrPhone}: ${error.message});
       throw new Error('Failed to find user for password reset');
     }
   }
 
   // 更新密碼，將新密碼加密後更新到資料庫
-  async updatePasswords(id: string, newPasswords: string): Promise<void> {
+  async updatePasswords(id: string, newPassword: string): Promise<void> {
     try {
-      const hashedPassword = await this.hashValue(newPasswords);
+      const hashedPassword = await this.authService.hashValue(newPassword);
       await this.usersRepository.update(id, { password: hashedPassword });
     } catch (error) {
+      console.error(Error updating password for user ${id}: ${error.message});
       throw new Error('Failed to update password');
-    }
-  }
-
-  // 更新安全回答，將新答案加密後儲存
-  async updateSecurityAnswers(
-    id: string,
-    newAnswers: { answer1: string; answer2: string; answer3: string },
-  ): Promise<void> {
-    try {
-      const hashedAnswer1 = await this.hashValue(newAnswers.answer1);
-      const hashedAnswer2 = await this.hashValue(newAnswers.answer2);
-      const hashedAnswer3 = await this.hashValue(newAnswers.answer3);
-
-      await this.usersRepository.update(id, {
-        securityAnswer1: hashedAnswer1,
-        securityAnswer2: hashedAnswer2,
-        securityAnswer3: hashedAnswer3,
-      });
-    } catch (error) {
-      throw new Error('Failed to update security answers');
     }
   }
 
@@ -156,10 +144,11 @@ export class UsersService {
   async updateUser(id: string, updateData: Partial<User>): Promise<void> {
     try {
       if (updateData.password) {
-        updateData.password = await this.hashValue(updateData.password);
+        updateData.password = await this.authService.hashValue(updateData.password);
       }
       await this.usersRepository.update(id, updateData);
     } catch (error) {
+      console.error(Error updating user ${id}: ${error.message});
       throw new Error('Failed to update user');
     }
   }
@@ -170,6 +159,7 @@ export class UsersService {
       const user = await this.findOneUser(id);
       await this.usersRepository.softRemove(user);
     } catch (error) {
+      console.error(Error soft removing user ${id}: ${error.message});
       throw new Error('Failed to remove user');
     }
   }
@@ -179,6 +169,7 @@ export class UsersService {
     try {
       return this.usersRepository.find({ withDeleted: true });
     } catch (error) {
+      console.error(Error finding all users including deleted: ${error.message});
       throw new Error('Failed to find users with deleted');
     }
   }
@@ -188,50 +179,8 @@ export class UsersService {
     try {
       await this.usersRepository.clear();
     } catch (error) {
+      console.error(Error clearing all users: ${error.message});
       throw new Error('Failed to clear all users');
     }
-  }
-
-  // === 身份驗證相關邏輯，準備移到 auth.service.ts ===
-
-  // 驗證使用者登入憑證
-  async validateUserCredentials(
-    emailOrPhone: string,
-    plainPassword: string,
-  ): Promise<boolean> {
-    const user = await this.findUserForLogin(emailOrPhone);
-    if (!user) {
-      return false;
-    }
-    return await bcrypt.compare(plainPassword, user.password);
-  }
-
-  // 驗證安全回答
-  async validateSecurityAnswers(
-    emailOrPhone: string,
-    answers: { answer1: string; answer2: string; answer3: string },
-  ): Promise<boolean> {
-    const user = await this.findUserForPassword(emailOrPhone);
-    if (!user) return false;
-
-    const isAnswer1Valid = await bcrypt.compare(
-      answers.answer1,
-      user.securityAnswer1,
-    );
-    const isAnswer2Valid = await bcrypt.compare(
-      answers.answer2,
-      user.securityAnswer2,
-    );
-    const isAnswer3Valid = await bcrypt.compare(
-      answers.answer3,
-      user.securityAnswer3,
-    );
-
-    return isAnswer1Valid && isAnswer2Valid && isAnswer3Valid;
-  }
-
-  // 加密方法，用於所有加密操作
-  private async hashValue(value: string): Promise<string> {
-    return await bcrypt.hash(value, 10);
   }
 }

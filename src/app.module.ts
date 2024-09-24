@@ -39,11 +39,11 @@ import { UserEmergencyContactsModule } from '@user-emergency-contacts/user-emerg
 import { UserPersonalStatementsModule } from '@user-personal-statements/user-personal-statements.module';
 import { UserPortfoliosModule } from '@user-portfolios/user-portfolios.module';
 import { UserPhotosModule } from '@user-photos/user-photos.module'; */
-import { UserIpModule } from './user-ip/user-ip.module';
+/* import { UserIpModule } from './user-ip/user-ip.module';
 import { UserDeviceModule } from './user-device/user-device.module';
 import { UserIpModule } from './user-ip/user-ip.module';
 import { UserDeviceModule } from './user-device/user-device.module';
-import { UserIpModule } from './user-ip/user-ip.module';
+import { UserIpModule } from './user-ip/user-ip.module'; */
 
 @Module({
   imports: [
@@ -60,8 +60,8 @@ import { UserIpModule } from './user-ip/user-ip.module';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // 自動生成 GraphQL schema
     }),
     UsersModule,
-    UserIpModule,
-    UserDeviceModule,
+    /*     UserIpModule,
+    UserDeviceModule, */
     /*   RolesModule,
     //ResumesModule,
     UserEducationModule,

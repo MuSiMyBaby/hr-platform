@@ -1,20 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '@users/users.service'; // 用來驗證使用者資料CRUD
-import { User } from '@users/entities/users.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UsersService, // 取得使用者資料
-    private jwtService: JwtService, // 生成和驗證 JWT
-  ) {}
-}
+  // 驗證使用者登入憑證
+  async validateUserCredentials(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  }
 
-// 驗證使用者是否存在，並且密碼是否正確
-async function validatorUser(
-  emailOrPhone: string,
-  password: string,
-): Promise<void> {
-  const user = await this.usersService.findOne();
+  // 驗證安全回答
+  async validateSecurityAnswers(
+    answers: { answer1: string; answer2: string; answer3: string },
+    storedAnswers: { answer1: string; answer2: string; answer3: string },
+  ): Promise<boolean> {
+    const isAnswer1Valid = await bcrypt.compare(
+      answers.answer1,
+      storedAnswers.answer1,
+    );
+    const isAnswer2Valid = await bcrypt.compare(
+      answers.answer2,
+      storedAnswers.answer2,
+    );
+    const isAnswer3Valid = await bcrypt.compare(
+      answers.answer3,
+      storedAnswers.answer3,
+    );
+
+    return isAnswer1Valid && isAnswer2Valid && isAnswer3Valid;
+  }
+
+  // 加密方法，用於所有加密操作
+  async hashValue(value: string): Promise<string> {
+    return await bcrypt.hash(value, 10);
+  }
 }
