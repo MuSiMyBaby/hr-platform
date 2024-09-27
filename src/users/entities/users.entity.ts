@@ -5,12 +5,14 @@ import {
   OneToMany,
   ManyToOne,
   DeleteDateColumn,
+  Index,
 } from 'typeorm';
 import { ObjectType, Field } from '@nestjs/graphql';
 
 @ObjectType() // 將這個實體暴露為 GraphQL 的物件-> @Mutation(=>Users)接收
 @Entity()
 export class User {
+  @Index()
   @Field() // GraphQL 查詢需要返回的欄位
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,6 +29,7 @@ export class User {
   @Column({ nullable: true, unique: true })
   passport: string;
 
+  @Index()
   @Field() // 信箱
   @Column({ unique: true })
   email: string;
@@ -35,6 +38,7 @@ export class User {
   @Column({ default: false })
   emailVerified: boolean;
 
+  @Index()
   @Field() // 手機號碼
   @Column({ unique: true })
   phoneNumber: string;
@@ -43,6 +47,7 @@ export class User {
   @Column({ default: false })
   phoneVerified: boolean;
 
+  @Index()
   @Field({ nullable: true }) // 使用者大頭照
   @Column({ nullable: true })
   profilePicture: string;
@@ -96,6 +101,18 @@ export class User {
   @Column({ nullable: true })
   residentialAddress: string;
 
+  @Field({ defaultValue: false })
+  @Column({ default: false })
+  isBasicInfoComplete: boolean;
+
+  @Field({ defaultValue: false })
+  @Column({ default: false })
+  isSecurityQuestionsComplete: boolean;
+
+  @Field({ defaultValue: 1 })
+  @Column({ default: 1 })
+  registrationStep: number;
+
   @Field({ defaultValue: false }) // 略過註冊流程標誌
   @Column({ default: false })
   skipRegistration: boolean;
@@ -114,27 +131,35 @@ export class User {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
+  verificationCodeExpiry: Date; // 驗證碼過期時間
+  @Index()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   resetToken: string;
-
+  @Index()
   @Field({ nullable: true })
   @Column({ nullable: true })
   resetTokenExpiry: Date;
-
-  @Field({ nullable: true }) // Google 登入
-  @Column({ nullable: true })
-  googleLogin: boolean;
-
+  @Index()
   @Field({ defaultValue: false }) // 是否完成註冊流程
   @Column({ default: false })
   isRegistered: boolean;
-
-  @Field({ nullable: true }) // Facebook 登入
-  @Column({ nullable: true })
-  facebookLogin: boolean;
-
-  @Field({ nullable: true }) // Instagram 登入
-  @Column({ nullable: true })
-  instagramLogin: boolean;
+  @Index()
+  @Field({ defaultValue: false }) // Google 登入
+  @Column({ default: false })
+  googleAppLogin: boolean;
+  @Index()
+  @Field({ defaultValue: false }) // Facebook 登入
+  @Column({ default: false })
+  facebookAppLogin: boolean;
+  @Index()
+  @Field({ defaultValue: false }) // Instagram 登入
+  @Column({ default: false })
+  instagramAppLogin: boolean;
+  @Index()
+  @Field({ defaultValue: false }) // Line 登入
+  @Column({ default: false })
+  lineAppLogin: boolean;
 
   @Field({ nullable: true }) // 最後登入時間
   @Column({ nullable: true })
@@ -159,6 +184,15 @@ export class User {
   @Field({ nullable: true }) // 軟刪除標記
   @DeleteDateColumn({ nullable: true })
   deleteAt: Date;
+
+  @Column({ nullable: true })
+  securityQuestion1: number; // 儲存第一個安全問題的編號
+
+  @Column({ nullable: true })
+  securityQuestion2: number;
+
+  @Column({ nullable: true })
+  securityQuestion3: number;
 
   @Field() // 安全回答1
   @Column()
