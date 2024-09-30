@@ -37,3 +37,7 @@ export class AuthService {
     return await bcrypt.hash(value, 10);
   }
 }
+
+/* 登入失敗次數的紀錄和處理邏輯，例如增加登入失敗次數、檢查是否需要鎖定帳號、則可以放在 AuthService 裡，
+當使用者的密碼驗證失敗時調用 incrementFailedLoginAttempts。
+成功登入後，應在 AuthService 中重置登入失敗次數 (resetFailedLoginAttempts) 並生成 JWT。 */

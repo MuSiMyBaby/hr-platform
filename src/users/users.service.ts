@@ -87,6 +87,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
 import { AuthService } from '@auth/auth.service'; // Import AuthService for hashing and validation
+import { IsPhoneNumber } from 'class-validator';
 
 @Injectable() // Injectable decorator for NestJS services
 export class UsersService {
@@ -119,14 +120,25 @@ export class UsersService {
    */
   async createUserBasics(userData: Partial<User>): Promise<User> {
     try {
-      const { password, ...restUserData } = userData;
+      const { password, email, phoneNumber, ...restUserData } = userData;
+      const normalizedEmail = email?.toLowerCase();
+      const normalizedPhoneNumber = phoneNumber?.toLowerCase();
 
+      const existingUser = await this.findUserByEmailOrPhone(
+        normalizedEmail || normalizedPhoneNumber,
+        // 檢查用戶是否已經註冊
+      );
+      if (existingUser && existingUser.isRegistered) {
+        throw new Error('User is already registered');
+      }
       // Hash the password
       const hashedPassword = await this.authService.hashValue(password);
 
       // Create a new user object with basic info and password
       const newUser = this.usersRepository.create({
         ...restUserData,
+        email: normalizedEmail,
+        phoneNumber: normalizedPhoneNumber,
         password: hashedPassword,
         isBasicInfoComplete: true, // 表示基本資料已完成
         registrationStep: 2, // 下一步是填寫安全問題
@@ -186,6 +198,7 @@ export class UsersService {
       existingUser.securityAnswer3 = hashedAnswer3;
       existingUser.isSecurityQuestionsComplete = true; // 安全問題已完成
       existingUser.registrationStep = 3; // 註冊完成
+      existingUser.registrationCompletedAt = new Date(); // 註冊完成時間
 
       // Save the updated user
       return this.usersRepository.save(existingUser);
@@ -264,6 +277,7 @@ export class UsersService {
    * This function retrieves the user information and password for login validation.
    * Note: Password is not sent to the front-end, only used for back-end validation.
    */
+
   async findUserByEmailOrPhone(
     emailOrPhone: string,
   ): Promise<User | undefined> {
@@ -274,7 +288,15 @@ export class UsersService {
           { email: normalizedEmailOrPhone },
           { phoneNumber: normalizedEmailOrPhone },
         ],
-        select: ['id', 'email', 'phoneNumber', 'password'], // Only return essential fields for validation
+        select: [
+          'id',
+          'email',
+          'phoneNumber',
+          'password',
+          'isRegistered',
+          'isSecurityQuestionsComplete',
+          'accountLocked',
+        ], // Only return essential fields for validation
       });
       if (!user) throw new Error('User not found');
       if (!user.isSecurityQuestionsComplete || user.registrationStep < 3) {
@@ -282,11 +304,20 @@ export class UsersService {
           'Security questions not completed. Redirect to security setup.',
         );
       }
+      if (user.accountLocked) {
+        throw new Error(
+          'Account is locked due to too many failed login attempts',
+        );
+      }
+      if (!user.isRegistered) {
+        throw new Error('User not registered. Redirect to registration.');
+      }
       return user;
     } catch (error) {
       console.error(
         `Error finding user for login ${emailOrPhone}: ${error.message}`,
       );
+      console.error(error.message);
       throw new Error('Failed to find user for login');
     }
   }
@@ -361,19 +392,28 @@ export class UsersService {
           { email: normalizedEmailOrPhone },
           { phoneNumber: normalizedEmailOrPhone },
         ],
-        select: ['id', 'securityAnswer1', 'securityAnswer2', 'securityAnswer3'], // Fetch stored answers for comparison
+        select: [
+          'id',
+          'securityAnswer1',
+          'securityAnswer2',
+          'securityAnswer3',
+          'failedSecurityAnswerAttempts',
+          'securityAnswerLocked',
+        ], // Fetch stored answers and attempts count
       });
 
       if (!user) throw new Error('User not found');
 
-      if (!user) throw new Error('User not found');
+      // Check if security answers are locked
+      if (user.securityAnswerLocked) {
+        throw new Error('Account locked due to too many failed attempts.');
+      }
 
       // Ensure security questions are set up
       if (!user.isSecurityQuestionsComplete) {
-        throw new Error(
-          'Security questions not set up. Redirect to security setup.',
-        );
+        throw new Error('Security questions not set up.');
       }
+
       // Validate answers using AuthService
       const areAnswersValid = await this.authService.validateSecurityAnswers(
         answers,
@@ -384,11 +424,23 @@ export class UsersService {
         },
       );
 
-      return areAnswersValid;
+      if (!areAnswersValid) {
+        user.failedSecurityAnswerAttempts += 1;
+        if (user.failedSecurityAnswerAttempts >= 5) {
+          user.securityAnswerLocked = true; // Lock account after 5 failed attempts
+        }
+        await this.usersRepository.save(user);
+        return false;
+      }
+
+      // Reset failed attempts on success
+      user.failedSecurityAnswerAttempts = 0;
+      user.securityAnswerLocked = false; // Unlock if previously locked
+      await this.usersRepository.save(user);
+
+      return true; // Return success
     } catch (error) {
-      console.error(
-        `Error verifying security answers for ${emailOrPhone}: ${error.message}`,
-      );
+      console.error(`Error verifying security answers: ${error.message}`);
       throw new Error('Failed to verify security answers');
     }
   }
@@ -414,6 +466,7 @@ export class UsersService {
       }
 
       const hashedPassword = await this.authService.hashValue(newPassword);
+
       await this.usersRepository.update(id, { password: hashedPassword });
     } catch (error) {
       console.error(`Error updating password for user ${id}: ${error.message}`);
@@ -566,6 +619,13 @@ export class UsersService {
       100000 + Math.random() * 900000,
     ).toString();
 
+    //追蹤驗證碼發送次數並鎖定超過次數限制的情況
+    user.verificationSentCount += 1;
+    user.lastVerificationSentDate = new Date();
+    if (user.verificationSentCount >= 5) {
+      user.verificationCodeLocked = true;
+    }
+
     // 設置驗證碼和過期時間（例如5分鐘後過期）
     user.verificationCode = verificationCode;
     user.verificationCodeExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5分鐘
@@ -583,7 +643,11 @@ export class UsersService {
     if (!user) {
       throw new Error('User not found');
     }
-
+    //追蹤失敗次數並鎖定。
+    user.failedVerificationCodeAttempts += 1;
+    if (user.failedVerificationCodeAttempts >= 5) {
+      user.verificationCodeLocked = true;
+    }
     // 檢查驗證碼是否匹配以及是否過期
     if (
       user.verificationCode === code &&
