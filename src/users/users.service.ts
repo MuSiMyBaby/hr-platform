@@ -88,12 +88,16 @@ import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
 import { AuthService } from '@auth/auth.service'; // Import AuthService for hashing and validation
 import { IsPhoneNumber } from 'class-validator';
-
+import { Logger } from '@nestjs/common';
 @Injectable() // Injectable decorator for NestJS services
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
-    @InjectRepository(User) // Inject repository for the User entity
-    private usersRepository: Repository<User>, // TypeORM repository for User entity
+    // @InjectRepository(User) 是一個依賴注入（DI）裝飾器，用來將 TypeORM 的 Repository 注入到 UserService 中
+    // 它將 Repository<User> 注入，以便我們可以在此服務中使用它進行與 User 實體相關的資料庫操作
+    // @InjectRepository(User) 本身不執行資料庫操作，它只負責將 Repository<User> 傳遞給我們的服務
+    @InjectRepository(User)
+    private usersRepository: Repository<User>, //保存Repository<User> DI
     private authService: AuthService, // AuthService for hashing passwords and validating credentials
   ) {}
 
@@ -145,11 +149,15 @@ export class UsersService {
       });
 
       // Save the new user to the database
+      this.logger.log(
+        `User with email: ${email} successfully created at ${new Date().toISOString()}`,
+      );
       return this.usersRepository.save(newUser);
     } catch (error) {
-      console.error(
-        `Error creating user with email ${userData.email}: ${error.message}`,
+      this.logger.error(
+        `Failed to create user with email ${userData.email}: ${error.message}`,
       );
+
       throw new Error('Failed to create user due to an internal server error');
     }
   }
@@ -201,11 +209,16 @@ export class UsersService {
       existingUser.registrationCompletedAt = new Date(); // 註冊完成時間
 
       // Save the updated user
+      this.logger.log(
+        `Security questions set up for user: ${userId} at ${new Date().toISOString()}`,
+      );
+
       return this.usersRepository.save(existingUser);
     } catch (error) {
-      console.error(
-        `Error updating security answers for user ${userId}: ${error.message}`,
+      this.logger.error(
+        `Failed to create user with email ${userId}: ${error.message}`,
       );
+
       throw new Error('Failed to update security answers');
     }
   }
@@ -216,6 +229,9 @@ export class UsersService {
    */
   async findAllUsers(): Promise<User[]> {
     try {
+      this.logger.log(
+        `Successfully retrieved all users at ${new Date().toISOString()}`,
+      );
       return this.usersRepository.find({
         select: [
           'id',
@@ -230,7 +246,7 @@ export class UsersService {
         ],
       });
     } catch (error) {
-      console.error(`Error finding all users: ${error.message}`);
+      this.logger.warn(`Error finding all users: ${error.message}`);
       throw new Error('Failed to find users');
     }
   }
@@ -278,16 +294,18 @@ export class UsersService {
    * Note: Password is not sent to the front-end, only used for back-end validation.
    */
 
-  async findUserByEmailOrPhone(
-    emailOrPhone: string,
-  ): Promise<User | undefined> {
+  async findUserByEmailOrPhone(emailOrPhone: string): Promise<User> {
     try {
-      const normalizedEmailOrPhone = emailOrPhone.toLowerCase(); // Normalize case
+      // 正規化電子郵件或電話號碼
+      const normalizedEmailOrPhone = emailOrPhone.toLowerCase();
+
+      // 查詢數據庫，使用者可能用 email 或 phoneNumber
       const user = await this.usersRepository.findOne({
         where: [
           { email: normalizedEmailOrPhone },
           { phoneNumber: normalizedEmailOrPhone },
         ],
+        // 僅返回必要的字段
         select: [
           'id',
           'email',
@@ -296,28 +314,43 @@ export class UsersService {
           'isRegistered',
           'isSecurityQuestionsComplete',
           'accountLocked',
-        ], // Only return essential fields for validation
+        ],
       });
-      if (!user) throw new Error('User not found');
+
+      // 如果未找到用戶，拋出錯誤
+      if (!user) {
+        this.logger.warn(`User not found for email/phone: ${emailOrPhone}`);
+        throw new Error('User not found');
+      }
+
+      // 檢查安全問題是否完成
       if (!user.isSecurityQuestionsComplete || user.registrationStep < 3) {
         throw new Error(
           'Security questions not completed. Redirect to security setup.',
         );
       }
+
+      // 檢查帳戶是否已鎖定
       if (user.accountLocked) {
         throw new Error(
           'Account is locked due to too many failed login attempts',
         );
       }
+
+      // 檢查使用者是否已完成註冊
       if (!user.isRegistered) {
         throw new Error('User not registered. Redirect to registration.');
       }
+
+      // 如果所有檢查都通過，返回使用者資料
+      this.logger.log(`All passed!`);
       return user;
     } catch (error) {
-      console.error(
+      // 捕獲異常並記錄錯誤
+      this.logger.error(
         `Error finding user for login ${emailOrPhone}: ${error.message}`,
       );
-      console.error(error.message);
+
       throw new Error('Failed to find user for login');
     }
   }
@@ -363,6 +396,7 @@ export class UsersService {
           'Security questions not completed. Redirect to security setup.',
         );
       }
+      this.logger.log(`Security questions retrieved for user: ${emailOrPhone}`);
       return {
         question1: this.securityQuestionsMap[user.securityQuestion1], // Convert ID to question text
         question2: this.securityQuestionsMap[user.securityQuestion2],
@@ -404,6 +438,11 @@ export class UsersService {
 
       if (!user) throw new Error('User not found');
 
+      // **先檢查 failedSecurityAnswerAttempts 是否已達上限**
+      if (user.failedSecurityAnswerAttempts >= 5 || user.securityAnswerLocked) {
+        throw new Error('Account locked due to too many failed attempts.');
+      }
+
       // Check if security answers are locked
       if (user.securityAnswerLocked) {
         throw new Error('Account locked due to too many failed attempts.');
@@ -438,9 +477,10 @@ export class UsersService {
       user.securityAnswerLocked = false; // Unlock if previously locked
       await this.usersRepository.save(user);
 
+      this.logger.log(`Security answers verified for user: ${user.id}`);
       return true; // Return success
     } catch (error) {
-      console.error(`Error verifying security answers: ${error.message}`);
+      this.logger.warn(`Failed security answers attempt for user: ${error}`);
       throw new Error('Failed to verify security answers');
     }
   }
@@ -466,10 +506,16 @@ export class UsersService {
       }
 
       const hashedPassword = await this.authService.hashValue(newPassword);
+      this.logger.log(
+        `Password updated for user: ${id} at ${new Date().toISOString()}`,
+      );
 
       await this.usersRepository.update(id, { password: hashedPassword });
     } catch (error) {
-      console.error(`Error updating password for user ${id}: ${error.message}`);
+      this.logger.error(
+        `Error updating password for user ${id}: ${error.message}`,
+      );
+
       throw new Error('Failed to update password');
     }
   }
@@ -549,6 +595,9 @@ export class UsersService {
   async removeUser(id: string): Promise<void> {
     try {
       const user = await this.findOneUser(id);
+      this.logger.log(
+        `User soft deleted: ${id} at ${new Date().toISOString()}`,
+      );
       await this.usersRepository.softRemove(user);
     } catch (error) {
       console.error(`Error soft removing user ${id}: ${error.message}`);
@@ -562,9 +611,12 @@ export class UsersService {
    */
   async findAllUsersWithDeleted(): Promise<User[]> {
     try {
+      this.logger.log(
+        `Successfully retrieved all users including deleted ones at ${new Date().toISOString()}`,
+      );
       return this.usersRepository.find({ withDeleted: true });
     } catch (error) {
-      console.error(
+      this.logger.error(
         `Error finding all users including deleted: ${error.message}`,
       );
       throw new Error('Failed to find users with deleted');
@@ -575,16 +627,25 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new Error('User not found');
 
+    this.logger.warn(
+      `Incrementing failed login attempts for user: ${id} at ${new Date().toISOString()}`,
+    );
+
     user.failedLoginAttempts += 1;
     if (user.failedLoginAttempts >= 5) {
+      this.logger.warn(`Account locked for user: ${id}`);
       user.accountLocked = true;
     }
     await this.usersRepository.save(user);
   }
 
   async resetFailedLoginAttempts(id: string): Promise<void> {
-    const user = await this.usersRepository.findOne({});
+    const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new Error('User not found');
+
+    this.logger.log(
+      `Failed login attempts reset for user: ${id} at ${new Date().toISOString()}`,
+    );
 
     user.failedLoginAttempts = 0;
     user.accountLocked = false; // 解鎖帳號
@@ -595,11 +656,28 @@ export class UsersService {
    * 清空所有使用者資料 (僅用於開發或測試環境)
    * 生產環境應該避免使用該方法。
    */
-  async clearAllUsers(): Promise<void> {
+  async clearAllUsers(confirm: boolean, sure: boolean): Promise<void> {
     try {
+      if (!confirm) {
+        this.logger.warn(
+          'Clear all users operation was attempted but not confirmed',
+        );
+        throw new Error('Clear operation was not confirmed');
+      }
+      if (!sure) {
+        this.logger.warn(
+          'Clear all users operation was attempted but not sure',
+        );
+        throw new Error('Clear operation was not sure');
+      }
+      this.logger.log(
+        `All users cleared from the database at ${new Date().toISOString()}`,
+      );
+
       await this.usersRepository.clear();
+      this.logger.log('All users cleared from the database');
     } catch (error) {
-      console.error(`Error clearing all users: ${error.message}`);
+      this.logger.error(`Error clearing all users: ${error.message}`);
       throw new Error('Failed to clear all users');
     }
   }
@@ -609,12 +687,18 @@ export class UsersService {
   // 用於生成驗證碼並保存到資料庫
   async generateVerificationCode(userId: string): Promise<void> {
     const user = await this.usersRepository.findOneBy({ id: userId });
-
     if (!user) {
+      this.logger.error(
+        `User not found while generating verification code for: ${userId}`,
+      );
       throw new Error('User not found');
     }
 
     // 生成6位數隨機驗證碼
+    this.logger.log(
+      `Verification code generated for user: ${userId} at ${new Date().toISOString()}`,
+    );
+
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();
@@ -641,8 +725,10 @@ export class UsersService {
     const user = await this.usersRepository.findOneBy({ id: userId });
 
     if (!user) {
+      this.logger.error(`User not found while verifying code for: ${userId}`);
       throw new Error('User not found');
     }
+
     //追蹤失敗次數並鎖定。
     user.failedVerificationCodeAttempts += 1;
     if (user.failedVerificationCodeAttempts >= 5) {
@@ -657,8 +743,13 @@ export class UsersService {
       user.verificationCode = null;
       user.verificationCodeExpiry = null;
       await this.usersRepository.save(user);
+      this.logger.log(
+        `Verification code verified for user: ${userId} at ${new Date().toISOString()}`,
+      );
+
       return true;
     } else {
+      this.logger.warn(`Failed verification code attempt for user: ${userId}`);
       throw new Error('Invalid or expired verification code');
     }
   }
@@ -746,10 +837,3 @@ export class UsersService {
     }
   } */
 //Check SecurityQuestions finished
-
-/**
- * registrationStep values:
- * 1: Basic information is incomplete.
- * 2: Basic information is complete, but security questions are not completed.
- * 3: Registration is fully completed.
- */
