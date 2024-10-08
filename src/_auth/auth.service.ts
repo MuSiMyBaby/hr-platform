@@ -100,7 +100,7 @@ export class AuthService {
     }
 
     //重置失敗次數
-    await this.usersService.resetFailedLoginAttempts(user.id);
+    await this.usersService.unlockAccount(user.id);
 
     //更新最後一次登入時間
     user.lastLogin = new Date();

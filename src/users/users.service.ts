@@ -467,14 +467,13 @@ export class UsersService {
         user.failedSecurityAnswerAttempts += 1;
         if (user.failedSecurityAnswerAttempts >= 5) {
           user.securityAnswerLocked = true; // Lock account after 5 failed attempts
+          user.lockedUntil = new Date();
         }
         await this.usersRepository.save(user);
         return false;
       }
 
-      // Reset failed attempts on success
-      user.failedSecurityAnswerAttempts = 0;
-      user.securityAnswerLocked = false; // Unlock if previously locked
+      await this.unlockAccount(user.id);
       await this.usersRepository.save(user);
 
       this.logger.log(`Security answers verified for user: ${user.id}`);
@@ -623,23 +622,65 @@ export class UsersService {
     }
   }
 
-  async incrementFailedLoginAttempts(id: string): Promise<void> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+  async incrementFailedAttempts(
+    userId: string,
+    attemptType: 'login' | 'security',
+  ): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
-    this.logger.warn(
-      `Incrementing failed login attempts for user: ${id} at ${new Date().toISOString()}`,
-    );
-
-    user.failedLoginAttempts += 1;
-    if (user.failedLoginAttempts >= 5) {
-      this.logger.warn(`Account locked for user: ${id}`);
-      user.accountLocked = true;
+    if (attemptType === 'login') {
+      user.failedLoginAttempts += 1;
+      this.logger.warn(
+        `Incrementing failed login attempts for user: ${user.id}. Current attempts: ${user.failedLoginAttempts}`,
+      );
+    } else if (attemptType === 'security') {
+      user.failedSecurityAnswerAttempts += 1;
+      this.logger.warn(
+        `Incrementing failed security answer attempts for user: ${user.id}. Current attempts: ${user.failedSecurityAnswerAttempts}`,
+      );
     }
+
+    // 累進鎖定時間邏輯
+    let lockoutDuration: number;
+    if (
+      user.failedLoginAttempts === 5 ||
+      user.failedSecurityAnswerAttempts === 5
+    ) {
+      lockoutDuration = 5 * 60 * 1000; // 鎖定5分鐘
+    } else if (
+      user.failedLoginAttempts === 10 ||
+      user.failedSecurityAnswerAttempts === 8
+    ) {
+      lockoutDuration = 15 * 60 * 1000; // 鎖定15分鐘
+    } else if (
+      user.failedLoginAttempts === 15 ||
+      user.failedSecurityAnswerAttempts === 11
+    ) {
+      lockoutDuration = 30 * 60 * 1000; // 鎖定30分鐘
+    } else if (
+      user.failedLoginAttempts >= 8 ||
+      user.failedSecurityAnswerAttempts >= 14
+    ) {
+      lockoutDuration = 24 * 60 * 60 * 1000; // 鎖定24小時
+    }
+
+    // 如果達到失敗次數上限，鎖定帳號
+    if (
+      user.failedLoginAttempts >= 5 ||
+      user.failedSecurityAnswerAttempts >= 5
+    ) {
+      user.accountLocked = true;
+      user.lockedUntil = new Date(Date.now() + lockoutDuration); // 設置累進鎖定時間
+      this.logger.warn(
+        `Account locked for user: ${user.id} for ${lockoutDuration / (60 * 1000)} minutes.`,
+      );
+    }
+
     await this.usersRepository.save(user);
   }
 
-  async resetFailedLoginAttempts(id: string): Promise<void> {
+  async unlockAccount(id: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new Error('User not found');
 
@@ -647,8 +688,10 @@ export class UsersService {
       `Failed login attempts reset for user: ${id} at ${new Date().toISOString()}`,
     );
 
-    user.failedLoginAttempts = 0;
+    user.failedLoginAttempts = 0; //Clear up attempts time
     user.accountLocked = false; // 解鎖帳號
+    user.lockedUntil = null; //時間清空
+    user.unlockAt = new Date(); //紀錄解鎖時間
     await this.usersRepository.save(user);
   }
 

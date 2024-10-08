@@ -222,6 +222,10 @@ export class User {
   @Column({ default: false })
   verificationCodeLocked: boolean;
 
+  @Field({ nullable: true }) //儲存帳號被鎖定到何時
+  @Column({ type: 'timestamp', nullable: true })
+  lockedUntil: Date;
+
   @Field() // 更新時間
   @Column({
     type: 'timestamp',
@@ -290,6 +294,10 @@ export class User {
   @Field({ defaultValue: false }) // 密碼重設鎖定
   @Column({ default: false })
   passwordResetLocked: boolean;
+
+  @Field({ nullable: true }) //每次解鎖帳號時更新這個欄位
+  @Column({ type: 'timestamp', nullable: true })
+  unlockAt: Date;
 
   @Field({ nullable: true }) //安全回答的最後嘗試時間
   @Column({ type: 'timestamp', nullable: true })
