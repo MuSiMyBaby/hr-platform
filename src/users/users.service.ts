@@ -1,12 +1,12 @@
 /**
- * User Service Functions Overview:
+ * User Service Functions Overview (Updated):
  *
  * 1. **createUserBasics()** - Creates a new user with basic information (Registration).
  *    - Encrypts the user's password before saving.
  *    - Sets `isBasicInfoComplete` to true and advances `registrationStep` to 2.
  *    - Front-end: This method is called when a new user signs up, and the user needs to fill out basic information (email, password, etc.).
  *      - The front-end should have a registration form that collects these details.
- *    - After this, the user is prompted to complete security questions.
+ *    - After this, the user is prompted to complete security questions using `createUserSecurity()`.
  *
  * 2. **createUserSecurity()** - Completes the user's security questions setup.
  *    - Hashes the user's security answers before saving.
@@ -15,71 +15,80 @@
  *      - The front-end should allow the user to choose three security questions and provide answers.
  *      - After this step, the `registrationStep` is updated to 3, indicating the completion of the registration.
  *
- * 3. **removeUser()** - Permanently deletes a user.
- *    - Used for hard deletion of user data.
- *    - Front-end: This is primarily used by an admin or in a user management dashboard.
- *      - You will need an admin page where the admin can select and delete a user.
- *
- * 4. **updateUser()** - Updates user data.
- *    - Can update sensitive information such as the password or security answers after verifying the current password.
- *    - Front-end: The user needs to first validate their identity through `validateUserForUpdate()`.
- *      - After successful validation, the user can then update personal details (password, security questions, etc.) on a profile update page.
- *
- * 5. **findUserByEmailOrPhone()** - Finds a user for login.
+ * 3. **findUserByEmailOrPhone()** - Finds a user for login.
  *    - Retrieves user data based on email or phone, mainly used for authentication.
  *    - Ensures that the user has completed security questions and the registration process before proceeding.
  *    - Front-end: This is part of the login process, where the user provides their email or phone, and the backend verifies the details.
+ *    - Calls `validateUserCredentials()` from AuthService after fetching user data.
  *
- * 6. **updatePasswords()** - Updates the user's password (Forgot/Reset password).
+ * 4. **incrementFailedAttempts()** - Increases the user's failed attempts (login or security answers).
+ *    - Tracks failed attempts for login and security answers and progressively locks the account.
+ *    - Lockout times increase based on the number of failed attempts (e.g., 5 minutes, 15 minutes, 30 minutes, 24 hours).
+ *    - Front-end: Shows an error message if the account is locked, explaining the lockout duration.
+ *    - If lockout is reached, the account is locked and `unlockAccount()` is required to reset the failed attempts after the lockout period.
+ *
+ * 5. **unlockAccount()** - Unlocks the user’s account after a successful operation (login, password reset, or correct security answers).
+ *    - Resets the `failedLoginAttempts` and `failedSecurityAnswerAttempts`.
+ *    - Sets `accountLocked` to false and clears `lockedUntil`.
+ *    - Front-end: No direct interaction, called after a successful login, reset password, or correct security answers.
+ *
+ * 6. **verifySecurityAnswers()** - Verifies the user's security answers.
+ *    - Compares the answers provided by the user with the stored hashed answers in the database.
+ *    - Increments failed attempts if the answers are incorrect.
+ *    - Unlocks the account if the answers are correct by calling `unlockAccount()`.
+ *    - Front-end: This is used in the forgot password flow. The front-end collects the user's answers and submits them for verification.
+ *
+ * 7. **updatePasswords()** - Updates the user's password (Forgot/Reset password).
  *    - Requires the user to enter the current password (if changing password from profile settings) or verifies security answers (if resetting).
+ *    - Resets the failed login attempts and unlocks the account after a successful password reset.
  *    - Front-end: This method is used when users want to reset their password either from the account settings page or from the forgot password flow.
  *
- * 7. **verifySecurityAnswers()** - Verifies the user's security answers.
- *    - Compares the answers provided by the user with the stored hashed answers in the database.
- *    - Front-end: This is typically used in the forgot password flow. The front-end collects the user's answers and submits them for verification.
- *
- * 8. **requestSecurityQuestions()** - Returns the user's stored security questions.
- *    - Retrieves the questions based on the user's email or phone.
- *    - Front-end: This is used in the account recovery process, where the front-end displays the user's security questions after verifying their identity (email/phone).
- *
- * 9. **getAllSecurityQuestions()** - Returns all available security questions.
+ * 8. **getAllSecurityQuestions()** - Returns all available security questions.
  *    - Provides a list of predefined security questions.
  *    - Front-end: This is used during the registration process, where the front-end displays available security questions for the user to choose from.
  *
- * 10. **findOneUser()** - Retrieves detailed user information.
- *     - Retrieves more detailed information about the user, including related entities like user IPs and devices.
- *     - Front-end: This is used to display user details on a profile or admin page.
+ * 9. **requestSecurityQuestions()** - Returns the user's stored security questions.
+ *    - Retrieves the questions based on the user's email or phone for account recovery.
+ *    - Front-end: This is part of the account recovery process. The front-end displays the user’s security questions after verifying their identity (email/phone).
  *
- * 11. **findAllUsers()** - Retrieves all users (excluding soft-deleted ones).
- *     - Returns a list of active users with selected fields like email, profile picture, and timestamps.
- *     - Front-end: This is typically used for admin panels or dashboards that list all users.
+ * 10. **updateUser()** - Updates the user's personal data, including sensitive information like passwords and security answers.
+ *     - Hashes new passwords or security answers before saving them.
+ *     - Front-end: After successful validation of the user’s identity (via password or security answers), this method allows the user to update profile data.
  *
- * 12. **findAllUsersWithDeleted()** - Retrieves all users, including soft-deleted ones.
- *     - Used to list both active and soft-deleted users.
- *     - Front-end: This is also part of an admin dashboard, where admins can see both active and soft-deleted users.
+ * 11. **findAllUsers()** - Retrieves all users with selected fields (e.g., name, email, profile).
+ *     - Used for user management dashboards.
+ *     - Front-end: Display users on an admin dashboard.
  *
- * 13. **softRemove()** - Soft deletes a user (marks as deleted without actual deletion).
- *     - Marks a user as deleted, allowing for future restoration.
- *     - Front-end: Used in admin dashboards to manage user deletion.
+ * 12. **findOneUser()** - Retrieves detailed user information, including relationships with devices or IPs.
+ *     - Front-end: This data is used on a profile page or admin management page.
  *
- * 14. **generateVerificationCode()** - Generates a verification code and saves it.
- *     - This code is used for phone or email verification during account recovery or registration.
- *     - Front-end: This is part of the phone/email verification process, where the front-end triggers the generation of a verification code.
- *     - You will need a third-party service to send this code to the user's phone or email.
+ * 13. **findAllUsersWithDeleted()** - Retrieves all users, including soft-deleted ones.
+ *     - Used to show both active and deleted users on admin dashboards.
+ *     - Front-end: Display all users including soft-deleted ones in an admin panel.
  *
- * 15. **verifyUserCode()** - Verifies the user's verification code.
- *     - Checks if the provided code matches the one saved in the database and is still valid.
- *     - Front-end: This is part of the phone/email verification process, where the user enters the received code and the backend validates it.
+ * 14. **removeUser()** - Soft deletes a user, marking the account as deleted without full data removal.
+ *     - Front-end: This method is used in admin dashboards or when a user deactivates their account.
  *
- * 16. **incrementFailedLoginAttempts()** - Increases the user's failed login attempts.
- *     - This is used during the authentication process to count failed login attempts.
- *     - If the failed login attempts reach a threshold (e.g., 5), the account is locked by setting `accountLocked` to true.
- *     - Front-end: This method is called after a failed login attempt, and the front-end may display an error message to the user if the account is locked.
+ * 15. **clearAllUsers()** - Clears all user data (used for testing or development environments only).
+ *     - Front-end: This is an admin-only method used to reset a testing environment.
  *
- * 17. **resetFailedLoginAttempts()** - Resets the user's failed login attempts.
- *     - This is used to unlock the user's account after a successful login or after the user has reset their password.
- *     - It resets `failedLoginAttempts` to 0 and sets `accountLocked` to false.
- *     - Front-end: After successful login or password reset, this method is called to unlock the user's account.
+ * 16. **generateVerificationCode()** - Generates a verification code for email or phone verification.
+ *     - Used for account recovery or registration verification processes.
+ *     - Front-end: This method is called when a verification code is needed for phone/email verification during account setup or recovery.
+ *
+ * 17. **verifyUserCode()** - Verifies the user's submitted verification code.
+ *     - Compares the code provided by the user with the one stored in the database.
+ *     - Front-end: This method is used to verify a code sent to the user's email or phone during account recovery or two-factor authentication.
+ *
+ * 18. **validateUserForUpdate()** - Validates the current password before allowing updates to the user profile.
+ *     - Front-end: The user must enter their current password to unlock the profile editing form. Once validated, the user can update personal details.
+ *
+ * Relationships between methods:
+ * - `createUserBasics()` leads to `createUserSecurity()` for completing the registration.
+ * - `findUserByEmailOrPhone()` is used for both login and recovery.
+ * - Failed login attempts and incorrect security answers increment through `incrementFailedAttempts()`, leading to potential account lockout.
+ * - `unlockAccount()` is called when a user successfully logs in or resets their password.
+ * - `verifySecurityAnswers()` handles account recovery and calls `unlockAccount()` if successful.
  */
 
 import { Injectable } from '@nestjs/common';
@@ -464,12 +473,7 @@ export class UsersService {
       );
 
       if (!areAnswersValid) {
-        user.failedSecurityAnswerAttempts += 1;
-        if (user.failedSecurityAnswerAttempts >= 5) {
-          user.securityAnswerLocked = true; // Lock account after 5 failed attempts
-          user.lockedUntil = new Date();
-        }
-        await this.usersRepository.save(user);
+        this.incrementFailedAttempts(user.id, 'security');
         return false;
       }
 
@@ -680,6 +684,7 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
+  // 解鎖帳號
   async unlockAccount(id: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new Error('User not found');

@@ -68,25 +68,39 @@ export class AuthService {
 
   // 登入邏輯，透過 findUserByEmailOrPhone 成功登入返回 JWT token
   async login(
-    email: string,
+    emailOrPhone: string,
     password: string,
   ): Promise<{ accessToken: string }> {
-    this.logger.log(`User login attempt with email: ${email}`);
+    this.logger.log(`User login attempt with email: ${emailOrPhone}`);
 
-    const user = await this.usersService.findUserByEmailOrPhone(email);
+    const user = await this.usersService.findUserByEmailOrPhone(emailOrPhone);
     if (!user) {
-      this.logger.warn(`Login failed: User not found for email: ${email}`);
+      this.logger.warn(
+        `Login failed: User not found for email: ${emailOrPhone}`,
+      );
       throw new Error('User not found');
     }
 
     // 檢查是否帳號已經被鎖定
     if (user.accountLocked) {
-      this.logger.warn(`Login failed: Account locked for email: ${email}`);
-      throw new Error(
-        'Account is locked due to too many failed login attempts',
-      );
+      if (user.lockedUntil && new Date() > user.lockedUntil) {
+        this.logger.log(
+          `Automatically unlocking account for user: ${emailOrPhone}`,
+        );
+        await this.usersService.unlockAccount(user.id);
+      } else {
+        const remainingTime = Math.ceil(
+          (user.lockedUntil.getTime() - new Date().getTime()) / (60 * 1000), //Unix 時間戳記 是從 1970 年 1 月 1 日 00:00:00 UTC 開始計算的秒數
+        );
+        this.logger.warn(
+          `Login failed: Account locked for email: ${emailOrPhone}, remaining time ${remainingTime} `,
+        );
+        throw new Error(
+          'Account is locked due to too many failed login attempts',
+        );
+      }
     }
-
+    //核對密碼
     const isPasswordValid = await this.validateUserCredentials(
       password,
       user.password,
@@ -94,8 +108,8 @@ export class AuthService {
 
     //檢查失敗次數 並檢查是否該鎖定帳號
     if (!isPasswordValid) {
-      this.logger.warn(`Invalid credentials for email: ${email}`);
-      await this.usersService.incrementFailedLoginAttempts(user.id);
+      this.logger.warn(`Invalid credentials for email: ${emailOrPhone}`);
+      await this.usersService.incrementFailedAttempts(user.id, 'login');
       throw new Error('Invalid credentials');
     }
 
@@ -107,10 +121,14 @@ export class AuthService {
     await this.usersService.updateUser(user.id, { lastLogin: user.lastLogin });
 
     //生成JWT Token返回
-    const payload = { userId: user.id, email: user.email };
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+    };
     const accessToken = this.generateJwtToken(payload);
 
-    this.logger.log(`Login successful for email: ${email}`);
+    this.logger.log(`Login successful for email: ${emailOrPhone}`);
     return { accessToken };
   }
 }
