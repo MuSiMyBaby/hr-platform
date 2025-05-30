@@ -5,7 +5,7 @@ const typeDefs = gql`
     id: Int!
     identityNumber: String
     workPermit: String
-    passport: String？
+    passport: String
     email: String!
     phoneNumber: String!
     profilePicture: String
