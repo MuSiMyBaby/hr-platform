@@ -1,0 +1,84 @@
+model User {
+  id Int @id @default(autoincrement())
+
+  // 登入相關欄位
+  email      String? @unique
+  googleId   String? @unique
+  facebookId String? @unique
+  lineId     String? @unique
+
+  // 使用紀錄
+  lastLogin   DateTime?
+  lastLoginIp String?
+
+  // 系統控制
+  skipRegistration Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isDeleted        Boolean  @default(false)
+  deletedAt        DateTime?
+  isAnonymized     Boolean  @default(false)
+  deletionReason   String?
+
+  // 公司與角色
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
+  role      UserRole @default(MEMBER)
+
+  // 主履歷（單一）
+  resumeId Int?        @unique
+  resume   UserResume? @relation("PrimaryResume", fields: [resumeId], references: [id])
+
+  // 所有履歷
+  resumes UserResume[] @relation("UserToResumes")
+
+  // 關聯
+  ipRecords              IpRecord[]
+  deviceRecords          DeviceRecord[]
+  resumeViewLogs         ResumeViewLog[]     @relation("AdminViewLog")
+  resumesUserViewed      ResumeViewLog[]     @relation("ResumeViewLog")
+  resumeReviewsGiven     ResumeReviewLog[]   @relation("ResumeReviewer")
+  userReviewsGiven       UserReviewLog[]     @relation("UserReviewer")
+  userReviewsReceived    UserReviewLog[]     @relation("UserReviewed")
+  accountActionsTaken    AccountHistoryLog[] @relation("AccountOperator")
+  accountActionsReceived AccountHistoryLog[] @relation("AccountOwner")
+  resumesGrantedByMe     ResumeAccessGrant[] @relation("ResumeGrantedBy")
+  resumesGrantedToMe     ResumeAccessGrant[] @relation("ResumeGrantedTo")
+  attendanceLogs         AttendanceLog[]
+  schedules              ShiftSchedule[]     @relation("UserToSchedule")
+  paySlips               PaySlip[]           @relation("UserToPaySlip")
+  sentMessages           MessageLog[]        @relation("UserToMessages")
+  createdThreads         MessageThread[]     @relation("UserToThread")
+}
+
+model IpRecord {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  ipAddress String
+  location  String?
+  createdAt DateTime @default(now())
+}
+
+model DeviceRecord {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  deviceInfo String
+  platform   String?
+  createdAt  DateTime @default(now())
+}
+
+model AccountHistoryLog {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation("AccountOwner", fields: [userId], references: [id])
+
+  operatorId Int?
+  operatedBy User? @relation("AccountOperator", fields: [operatorId], references: [id])
+
+  action    String
+  note      String?
+  createdAt DateTime @default(now())
+}

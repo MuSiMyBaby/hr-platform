@@ -1,0 +1,20 @@
+model MessageThread {
+  id          Int        @id @default(autoincrement())
+  resumeId    Int
+  resume      UserResume @relation("ResumeToThread", fields: [resumeId], references: [id])
+  createdById Int
+  createdBy   User       @relation("UserToThread", fields: [createdById], references: [id])
+  createdAt   DateTime   @default(now())
+
+  messages MessageLog[]
+}
+
+model MessageLog {
+  id        Int           @id @default(autoincrement())
+  threadId  Int
+  thread    MessageThread @relation(fields: [threadId], references: [id])
+  senderId  Int
+  sender    User          @relation("UserToMessages", fields: [senderId], references: [id])
+  content   String
+  sentAt    DateTime      @default(now())
+}

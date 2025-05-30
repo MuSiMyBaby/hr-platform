@@ -1,0 +1,62 @@
+model UserReviewLog {
+  id           Int  @id @default(autoincrement())
+  targetUser   User @relation("UserReviewed", fields: [targetUserId], references: [id])
+  targetUserId Int
+  reviewer     User @relation("UserReviewer", fields: [reviewerId], references: [id])
+  reviewerId   Int
+
+  score         Int?
+  reviewType    String?
+  isBlacklisted Boolean  @default(false)
+  note          String?
+  createdAt     DateTime @default(now())
+
+  tags          UserReviewTag[]  // ✅ 使用正規化 tag 關聯
+
+  @@index([targetUserId, reviewerId])
+}
+
+model ResumeReviewLog {
+  id         Int        @id @default(autoincrement())
+  resumeId   Int
+  resume     UserResume @relation(fields: [resumeId], references: [id])
+  reviewerId Int
+  reviewer   User       @relation("ResumeReviewer", fields: [reviewerId], references: [id])
+
+  score     Int?
+  status    ReviewStatus @default(PENDING)
+  note      String?
+  createdAt DateTime     @default(now())
+
+  tags      ResumeReviewTag[]  // ✅ 使用正規化 tag 關聯
+
+  @@index([resumeId, reviewerId])
+}
+
+model UserReviewTag {
+  id        Int              @id @default(autoincrement())  // ✅ 同樣主鍵
+  tagId     Int
+  tag       ReviewTagOption  @relation(fields: [tagId], references: [id])
+  reviewId  Int
+  review    UserReviewLog    @relation(fields: [reviewId], references: [id])
+}
+
+model ResumeReviewTag {
+  id        Int              @id @default(autoincrement())  // ✅ 加上主鍵
+  tagId     Int
+  tag       ReviewTagOption  @relation(fields: [tagId], references: [id])
+  reviewId  Int
+  review    ResumeReviewLog  @relation(fields: [reviewId], references: [id])
+}
+
+
+model ReviewTagOption {
+  id     Int     @id @default(autoincrement())
+  label  String  @unique
+  type   String?
+  isPublic Boolean @default(true)
+
+  // ✅ 加上反向關聯
+  resumeTags ResumeReviewTag[]
+  userTags   UserReviewTag[]
+}

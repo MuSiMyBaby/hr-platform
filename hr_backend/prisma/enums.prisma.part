@@ -1,0 +1,86 @@
+// prisma/enums.prisma
+enum LanguageLevel {
+  BASIC
+  INTERMEDIATECompany
+  UPPER_INTERMEDIATE
+  ADVANCED
+  OTHER
+}
+
+enum EducationStatus {
+  ENROLLED
+  SUSPENDED
+  GRADUATED
+  DROPPED_OUT
+  OTHER
+}
+
+enum ShiftType {
+  DAY
+  SWING
+  EVENING
+  NIGHT
+  OTHER
+}
+
+enum WorkIdentityType {
+  FRESH_GRADUATE
+  EXPAT
+  FREELANCER
+  HOUSE_PARENT
+  YOUTH
+  RETIREE
+  WORKING_WOMAN
+  STUDENT
+  SOCIAL_EXPLORER
+  GAP_YEAR
+  OTHER
+}
+
+enum JobTypeEnum {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  FREELANCE
+  OTHER
+}
+
+enum ContactRelation {
+  FATHER
+  MOTHER
+  CHILD
+  OTHER
+}
+
+enum CommuteMethod {
+  CAR
+  MOTORCYCLE
+  WALK
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_REVISION
+  OTHER
+}
+
+enum UserRole {
+  PLATFORM_ADMIN
+  COMPANY_ADMIN
+  HR
+  REVIEWER
+  MEMBER
+  JOB_SEEKER
+}
+
+enum CompanyType {
+  AGENCY
+  CLIENT
+  FREELANCER
+  HEADHUNTER
+  PLATFORM
+  OTHER
+}

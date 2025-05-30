@@ -1,0 +1,28 @@
+model JobPosting {
+  id           Int        @id @default(autoincrement())
+  companyId    Int
+  company      Company    @relation(fields: [companyId], references: [id])
+  title        String
+  description  String
+  location     String?
+  jobType      JobTypeEnum
+  salaryRange  String?
+  isActive     Boolean    @default(true)
+  postedAt     DateTime   @default(now())
+  expiredAt    DateTime?
+
+  applications JobApplication[]
+
+  @@index([companyId])
+}
+
+model JobApplication {
+  id        Int        @id @default(autoincrement())
+  jobId     Int
+  job       JobPosting @relation(fields: [jobId], references: [id])
+  resumeId  Int
+  resume    UserResume @relation(fields: [resumeId], references: [id])
+  status    String     // e.g., PENDING, INTERVIEW, REJECTED, HIRED
+  appliedAt DateTime   @default(now())
+  note      String?
+}

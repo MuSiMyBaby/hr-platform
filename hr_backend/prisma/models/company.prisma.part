@@ -1,0 +1,57 @@
+model Company {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique
+  type           CompanyType     @default(CLIENT)
+  isApproved     Boolean         @default(false)
+  isActive       Boolean         @default(true)
+
+  users          User[]
+  resumes        UserResume[]
+  attendanceLogs AttendanceLog[]
+  schedules      ShiftSchedule[] @relation("CompanyToSchedule")
+  issuedPaySlips PaySlip[]       @relation("CompanyToPaySlip")
+  jobPosting JobPosting[]
+}
+
+model AttendanceLog {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  company   Company   @relation(fields: [companyId], references: [id])
+  companyId Int
+  clockIn   DateTime
+  clockOut  DateTime?
+  note      String?
+
+  schedule   ShiftSchedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId Int?
+}
+
+model ShiftSchedule {
+  id             Int             @id @default(autoincrement())
+  userId         Int
+  user           User            @relation("UserToSchedule", fields: [userId], references: [id])
+  companyId      Int
+  company        Company         @relation("CompanyToSchedule", fields: [companyId], references: [id])
+  shiftDate      DateTime
+  startTime      DateTime
+  endTime        DateTime
+  note           String?
+
+  attendanceLogs AttendanceLog[]
+}
+
+model PaySlip {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation("UserToPaySlip", fields: [userId], references: [id])
+  issuedById Int
+  issuedBy   Company  @relation("CompanyToPaySlip", fields: [issuedById], references: [id])
+  companyId  Int
+  month      DateTime
+  amount     Int
+  note       String?
+  fileUrl    String?
+
+  createdAt DateTime @default(now())
+}

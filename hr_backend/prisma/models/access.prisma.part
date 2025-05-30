@@ -1,0 +1,26 @@
+model ResumeAccessGrant {
+  id           Int        @id @default(autoincrement())
+  resumeId     Int
+  resume       UserResume @relation("ResumeToAccess", fields: [resumeId], references: [id])
+
+  grantedToId  Int
+  grantedTo    User       @relation("ResumeGrantedTo", fields: [grantedToId], references: [id])
+
+  grantedById  Int
+  grantedBy    User       @relation("ResumeGrantedBy", fields: [grantedById], references: [id])
+
+  createdAt    DateTime   @default(now())
+
+  @@unique([resumeId, grantedToId])
+}
+
+model ResumeViewLog {
+  id             Int        @id @default(autoincrement())
+  adminId        Int
+  admin          User       @relation("AdminViewLog", fields: [adminId], references: [id])
+  userViewedById Int
+  userViewedBy   User       @relation("ResumeViewLog", fields: [userViewedById], references: [id])
+  resumeId       Int
+  resume         UserResume @relation("ResumeViewLog", fields: [resumeId], references: [id])
+  viewedAt       DateTime   @default(now())
+}
